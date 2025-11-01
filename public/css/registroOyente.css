@@ -1,0 +1,30 @@
+/* Estilos personalizados para el proyecto utilizando Bootstrap */
+
+body {
+    background-color: #f8f9fa; /* Color de fondo claro */
+}
+
+.container {
+    margin-top: 20px; /* Espaciado superior para el contenedor */
+}
+
+h1 {
+    color: #343a40; /* Color del encabezado */
+    text-align: center; /* Centrar el texto */
+}
+
+.btn-custom {
+    background-color: #007bff; /* Color de fondo del botón */
+    color: white; /* Color del texto del botón */
+}
+
+.form-control {
+    border-radius: 0.25rem; /* Bordes redondeados para los campos de formulario */
+}
+
+.footer {
+    text-align: center; /* Centrar el texto del pie de página */
+    padding: 10px 0; /* Espaciado vertical */
+    background-color: #343a40; /* Color de fondo del pie de página */
+    color: white; /* Color del texto del pie de página */
+}
