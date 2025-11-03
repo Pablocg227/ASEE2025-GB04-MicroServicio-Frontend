@@ -1,0 +1,17 @@
+{
+  "name": "registro-oyente-bootstrap",
+  "version": "1.0.0",
+  "description": "Proyecto que utiliza Bootstrap para subir una nueva cancion.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.0"
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
