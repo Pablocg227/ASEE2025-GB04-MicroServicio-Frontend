@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Subir Nuevo Álbum</title>
+
+        <!-- Bootstrap CSS -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+
+        <!-- Estilos propios -->
+        <link rel="stylesheet" href="css/FormularioAlbum.css" />
+    </head>
+    <body class="bg-light">
+        <main class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h4 class="mb-3 text-center">Subir Nuevo Álbum</h4>
+                            <p class="text-muted small text-center mb-4">
+                                Los campos marcados con (*) son obligatorios.
+                            </p>
+
+                            <form
+                                id="uploadAlbumForm"
+                                enctype="multipart/form-data"
+                                novalidate
+                            >
+                                <div class="row g-2">
+                                    <!-- Título del álbum -->
+                                    <div class="col-12">
+                                        <label for="nomAlbum" class="form-label"
+                                        >* Título del álbum</label
+                                        >
+                                        <input
+                                            id="nomAlbum"
+                                            name="titulo"
+                                            type="text"
+                                            class="form-control"
+                                            required
+                                        />
+                                        <div class="invalid-feedback">
+                                            El título del álbum es obligatorio.
+                                        </div>
+                                    </div>
+
+                                    <!-- Canciones del álbum -->
+                                    <div class="col-12">
+                                        <label class="form-label">* Canciones del álbum</label>
+                                        <div
+                                            id="canciones-list-container"
+                                            class="song-list-container"
+                                        >
+                                            <div class="text-muted p-3">Cargando canciones...</div>
+                                        </div>
+                                        <div class="form-text">
+                                            Haz clic en las canciones que deseas añadir al álbum.
+                                        </div>
+                                        <div
+                                            id="songsInvalid"
+                                            class="invalid-feedback d-block"
+                                            style="display: none"
+                                        >
+                                            Selecciona al menos una canción para el álbum.
+                                        </div>
+                                    </div>
+
+                                    <!-- Imagen de portada del álbum -->
+                                    <div class="col-12">
+                                        <label for="imgPortada" class="form-label"
+                                        >Imagen de portada del álbum</label
+                                        >
+                                        <input
+                                            id="imgPortada"
+                                            name="portada"
+                                            type="file"
+                                            class="form-control"
+                                            accept="image/*"
+                                        />
+                                        <div class="form-text">Opcional. JPG/PNG/GIF.</div>
+                                        <div class="mt-2 text-center">
+                                            <img
+                                                id="previewAlbumImg"
+                                                src=""
+                                                alt="Previsualización portada álbum"
+                                                class="img-fluid rounded"
+                                                style="max-height: 120px; display: none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Géneros (estilo "chips" como en subida de canción) -->
+                                    <div class="col-12">
+                                        <label class="form-label">* Género(s) musical(es)</label>
+
+                                        <!-- contenedor de “cuadraditos” -->
+                                        <div id="genreGrid" class="d-flex flex-wrap gap-2"></div>
+
+                                        <small class="form-text text-muted"
+                                        >Selecciona uno o varios.</small
+                                        >
+                                        <div
+                                            id="genreInvalid"
+                                            class="invalid-feedback d-block"
+                                            style="display: none"
+                                        >
+                                            Selecciona al menos un género.
+                                        </div>
+                                    </div>
+
+                                    <!-- Fecha de lanzamiento -->
+                                    <div class="col-md-6">
+                                        <label for="date" class="form-label"
+                                        >* Fecha de lanzamiento</label
+                                        >
+                                        <input
+                                            id="date"
+                                            name="date"
+                                            type="date"
+                                            class="form-control"
+                                            required
+                                        />
+                                        <div class="invalid-feedback">
+                                            La fecha de lanzamiento es obligatoria.
+                                        </div>
+                                    </div>
+
+                                    <!-- Precio -->
+                                    <div class="col-md-6">
+                                        <label for="precio" class="form-label">* Precio (EUR)</label>
+                                        <input
+                                            id="precio"
+                                            name="precio"
+                                            type="number"
+                                            class="form-control"
+                                            required
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                        />
+                                        <div class="form-text">
+                                            Usa 0.00 para álbum gratuito.
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            El precio debe ser un número igual o mayor a cero.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid mt-3">
+                                    <button class="btn btn-primary" type="submit">
+                                        Subir álbum
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <footer class="footer mt-4 py-3">
+                        <div class="container">
+                            <span>&copy; 2025 Tu Plataforma de Música</span>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="js/FormularioAlbum.js"></script>
+    </body>
+</html>
+
