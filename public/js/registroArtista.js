@@ -66,9 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const result = await response.json();
         alert("🎉 Artista registrado correctamente");
         console.log("✅ Respuesta del servidor:", result);
-        form.reset();
-        preview.src = '';
-        preview.style.display = 'none';
+        window.location.href = 'login.html';
       } else {
         const error = await response.json();
         alert("⚠️ Error: " + (error.detail || error.message || "No se pudo registrar el artista."));
