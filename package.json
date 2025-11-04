@@ -1,0 +1,17 @@
+{
+  "name": "registro-artista",
+  "version": "1.0.0",
+  "description": "Proyecto de registro de artistas.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "live-server public --port=5500 --no-browser",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"}
+
