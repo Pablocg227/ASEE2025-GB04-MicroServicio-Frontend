@@ -15,11 +15,7 @@
         <div class="card shadow-sm">
           <div class="card-body p-4">
             <h4 class="mb-3 text-center">Registro de artista</h4>
-      <!-- Formulario original apuntaba a un endpoint backend que no existe en este repo:
-        <form id="artistForm" action="/api/registroArtista" method="post" enctype="multipart/form-data" novalidate>
-        -->
-      <!-- Versión segura: sin action para evitar llamadas a un backend ausente. -->
-      <form id="artistForm" action="#" method="post" enctype="multipart/form-data" novalidate>
+      <form id="artistForm" novalidate>
               
               <div class="mb-3">
                 <label for="nombre_artistico" class="form-label">Nombre artístico</label>
@@ -46,23 +42,6 @@
                   <input id="password2" name="password2" type="password" class="form-control" required minlength="8">
                   <div class="invalid-feedback">Las contraseñas deben coincidir.</div>
                 </div>
-              </div>
-
-              <div class="mb-3">
-                <label for="genero" class="form-label">Género musical</label>
-                <select id="genero" name="genero" class="form-select" required>
-                  <option value="">Selecciona un género</option>
-                  <option>Pop</option>
-                  <option>Rock</option>
-                  <option>Electrónica</option>
-                  <option>Hip-Hop</option>
-                  <option>Clásica</option>
-                  <option>Jazz</option>
-                  <option>Trap</option>
-                  <option>Indie</option>
-                  <option>Otro</option>
-                </select>
-                <div class="invalid-feedback">Selecciona un género musical.</div>
               </div>
 
               <div class="mb-3">
