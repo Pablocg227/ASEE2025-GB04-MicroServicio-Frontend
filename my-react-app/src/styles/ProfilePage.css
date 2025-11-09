@@ -1,0 +1,110 @@
+.profile-page { font-family: system-ui, Arial, sans-serif; color: #222; padding: 24px 16px; }
+.banner {
+  height: 160px; background: #eef2f4 center/cover no-repeat; position: relative;
+  border-bottom: 1px solid #e5e7eb;
+}
+.banner-btn {
+  position: absolute; right: 16px; top: 16px; background: #fff; border: 1px solid #d1d5db;
+  padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;
+}
+.profile-header { display: grid; grid-template-columns: 240px 1fr; gap: 24px; }
+.avatar-box { 
+  width: 240px; height: 240px; background: #f3f4f6; border-radius: 6px; 
+  overflow: hidden; display: grid; place-items: center;
+}
+.avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-placeholder { text-align: center; color: #6b7280; font-size: 48px; }
+.profile-meta .title-row { display:flex; align-items:center; justify-content:space-between; }
+.profile-meta h1 { font-size: 28px; margin: 0; }
+.actions { display:flex; gap: 12px; align-items:center; }
+.btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; border: none; font-size: 14px; }
+.btn-outline { background:#fff; border:1px solid #cbd5e1; }
+.btn-outline:hover { background:#f9fafb; }
+.btn-primary { background:#0ea5e9; color:#fff; }
+.btn-primary:hover { background:#0284c7; }
+.link { background:none; border:none; color:#0ea5e9; cursor:pointer; text-decoration:underline; }
+.tabs { margin-top: 16px; border-bottom: 1px solid #e5e7eb; display:flex; gap:24px; }
+.tab { background:none; border:none; padding: 12px 0; cursor:pointer; color:#374151; }
+.tab.active { border-bottom: 2px solid #111827; font-weight:600; }
+.profile-content { padding: 24px 0; }
+.empty-state { text-align:center; margin: 48px 0; }
+.btn.cta { background:#0ea5e9; color:#fff; padding: 12px 24px; }
+.profile-page.loading, .profile-page.error { text-align: center; color: #6b7280; padding: 48px; }
+.profile-page.error { color: #dc2626; }
+
+/* Modal */
+.modal-overlay { 
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+  background: rgba(0,0,0,0.5); display: grid; place-items: center; z-index: 1000; 
+}
+.modal-content { 
+  background: #fff; border-radius: 12px; width: 90%; max-width: 500px; 
+  max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+}
+.modal-header { 
+  display: flex; justify-content: space-between; align-items: center; 
+  padding: 20px; border-bottom: 1px solid #e5e7eb; 
+}
+.modal-header h2 { margin: 0; font-size: 20px; }
+.close-btn { 
+  background: none; border: none; font-size: 28px; cursor: pointer; 
+  color: #6b7280; line-height: 1; 
+}
+.close-btn:hover { color: #111827; }
+.edit-form { padding: 20px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+.form-group input[type="text"],
+.form-group input[type="password"] { 
+  width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; 
+  font-size: 14px; 
+}
+.form-group input:focus { outline: none; border-color: #0ea5e9; }
+.avatar-upload { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.avatar-preview { width: 120px; height: 120px; border-radius: 6px; object-fit: cover; }
+.form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+.purchases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.purchase-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.purchase-item:hover {
+  transform: scale(1.05);
+}
+
+.song-cover {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.purchase-item h3 {
+  margin: 5px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.purchase-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+@media (max-width: 800px) {
+  .profile-header { grid-template-columns: 1fr; }
+  .avatar-box { width: 160px; height: 160px; margin: 0 auto; }
+  .profile-meta .title-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
