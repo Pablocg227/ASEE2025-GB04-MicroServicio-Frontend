@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="es" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Resound — Descubre música independiente</title>
+    <meta
+      name="description"
+      content="Página principal estilo Bandcamp para un proyecto universitario con microservicios (usuario, contenido, estadísticas)."
+    />
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --mc-accent: #00d1b2; /* turquesa suave */
+      }
+      .brand-gradient {
+        background:
+          radial-gradient(
+            1200px 400px at 20% 0%,
+            rgba(0, 209, 178, 0.25),
+            transparent 60%
+          ),
+          radial-gradient(
+            600px 200px at 90% 10%,
+            rgba(111, 66, 193, 0.2),
+            transparent 60%
+          );
+      }
+      .logo-dot {
+        color: var(--mc-accent);
+      }
+      .album-card .card-img-top {
+        aspect-ratio: 1 / 1; /* cuadrada, como portadas */
+        object-fit: cover;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      .tag-cloud a {
+        text-decoration: none;
+      }
+      .tag-cloud a:hover {
+        filter: brightness(1.1);
+      }
+      .sticky-player {
+        position: sticky;
+        bottom: 0;
+        z-index: 1030;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(6px);
+      }
+      .price-pill {
+        color: #111;
+        background: var(--mc-accent);
+      }
+      .pointer {
+        cursor: pointer;
+      }
+      .hover-raise {
+        transition:
+          transform 0.12s ease,
+          box-shadow 0.12s ease;
+      }
+      .hover-raise:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+    </style>
+  </head>
+  <body class="brand-gradient">
+    <!-- Header / Navbar -->
+    <header class="border-bottom sticky-top bg-body">
+      <nav class="navbar navbar-expand-md container-xxl">
+        <a class="navbar-brand fw-bold" href="#" aria-label="Inicio">
+          Resound<span class="logo-dot">•</span>
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMain"
+          aria-controls="navMain"
+          aria-expanded="false"
+          aria-label="Mostrar navegación"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+          <form
+            class="d-flex ms-md-3 my-2 my-md-0 w-100"
+            role="search"
+            onsubmit="return false;"
+          >
+            <label for="q" class="sr-only"
+              >Buscar música, artistas, etiquetas…</label
+            >
+            <div class="input-group">
+              <span class="input-group-text bg-body-secondary border-0"
+                ><i class="bi bi-search"></i
+              ></span>
+              <input
+                id="q"
+                class="form-control border-0"
+                type="search"
+                placeholder="Buscar música, artistas, etiquetas…"
+              />
+            </div>
+          </form>
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="btnLogin"
+                ><i class="bi bi-box-arrow-in-right me-1"></i>Entrar</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#"
+                ><i class="bi bi-heart me-1"></i>Colección</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#"
+                ><i class="bi bi-cart3 me-1"></i>Carrito</a
+              >
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Hero / Discover -->
+    <section class="py-5 border-bottom">
+      <div class="container-xxl">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <h1 class="display-6 fw-bold">
+              Descubre y apoya
+              <span class="text-info-emphasis">música independiente</span>
+            </h1>
+            <p class="lead text-body-secondary">
+              Compra álbumes y temas directamente a artistas y sellos. Explora
+              por géneros, etiquetas y tendencias.
+            </p>
+            <div class="d-flex gap-2">
+              <button
+                class="btn btn-info text-dark fw-semibold"
+                id="btnExplorar"
+              >
+                <i class="bi bi-compass me-2"></i>Explorar
+              </button>
+              <button class="btn btn-outline-light" id="btnGeneros">
+                <i class="bi bi-sliders2 me-2"></i>Géneros
+              </button>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card bg-body-secondary border-0 shadow-sm">
+              <div class="card-body">
+                <h2 class="h5 mb-3">Tendencias esta semana</h2>
+                <div
+                  id="carouselTrending"
+                  class="carousel slide"
+                  data-bs-ride="carousel"
+                >
+                  <div
+                    class="carousel-inner"
+                    id="trendingCarouselInner"
+                    aria-live="polite"
+                  >
+                    <!-- Slides renderizadas por JS -->
+                  </div>
+                  <button
+                    class="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#carouselTrending"
+                    data-bs-slide="prev"
+                    aria-label="Anterior"
+                  >
+                    <span
+                      class="carousel-control-prev-icon"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                  <button
+                    class="carousel-control-next"
+                    type="button"
+                    data-bs-target="#carouselTrending"
+                    data-bs-slide="next"
+                    aria-label="Siguiente"
+                  >
+                    <span
+                      class="carousel-control-next-icon"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main content -->
+    <main class="container-xxl my-4">
+      <div class="row g-4">
+        <!-- Left / Feed grid -->
+        <div class="col-lg-9">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Recién subido</h2>
+            <div class="dropdown">
+              <button
+                class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                Ordenar
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a
+                    class="dropdown-item sort-item active"
+                    data-sort="new"
+                    href="#"
+                    >Más nuevo</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item sort-item"
+                    data-sort="popular"
+                    href="#"
+                    >Más popular</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item sort-item" data-sort="price" href="#"
+                    >Más barato</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div
+            id="feedGrid"
+            class="row row-cols-2 row-cols-md-3 row-cols-xl-4 gy-4"
+          >
+            <!-- Tarjetas renderizadas por JS -->
+          </div>
+
+          <!-- Paginación -->
+          <nav class="mt-4" aria-label="Más resultados">
+            <ul class="pagination justify-content-center" id="pager"></ul>
+          </nav>
+        </div>
+
+        <!-- Right / Filters -->
+        <aside class="col-lg-3">
+          <div class="card bg-body-secondary border-0 mb-3">
+            <div class="card-body">
+              <h3 class="h6">Géneros y etiquetas</h3>
+              <div class="d-flex flex-wrap gap-2 tag-cloud" id="tagCloud">
+                <!-- Etiquetas por JS -->
+              </div>
+            </div>
+          </div>
+          <div class="card bg-body-secondary border-0">
+            <div class="card-body">
+              <h3 class="h6">Top artistas (7 días)</h3>
+              <ol
+                id="topArtists"
+                class="list-group list-group-numbered list-group-flush"
+              >
+                <!-- Top por JS -->
+              </ol>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- Sticky mini player -->
+    <div class="sticky-player bg-body p-2">
+      <div class="container-xxl">
+        <div class="d-flex align-items-center gap-3">
+          <img
+            id="playerCover"
+            src=""
+            alt="Portada actual"
+            class="rounded"
+            style="width: 48px; height: 48px; object-fit: cover"
+          />
+          <div class="flex-fill">
+            <div class="fw-semibold" id="playerTitle">Nada reproduciéndose</div>
+            <div class="small text-body-secondary" id="playerArtist"></div>
+            <input
+              type="range"
+              class="form-range"
+              id="seekBar"
+              min="0"
+              max="100"
+              value="0"
+              aria-label="Posición de reproducción"
+            />
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              id="btnPrev"
+              aria-label="Anterior"
+            >
+              <i class="bi bi-skip-start-fill"></i>
+            </button>
+            <button
+              class="btn btn-info text-dark fw-semibold btn-sm"
+              id="btnPlay"
+              aria-label="Reproducir/Pausar"
+            >
+              <i class="bi bi-play-fill"></i>
+            </button>
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              id="btnNext"
+              aria-label="Siguiente"
+            >
+              <i class="bi bi-skip-end-fill"></i>
+            </button>
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              id="btnMute"
+              aria-label="Silencio"
+            >
+              <i class="bi bi-volume-up"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <audio id="audio" preload="none"></audio>
+    </div>
+
+    <footer class="border-top py-4 mt-4 text-body-secondary">
+      <div
+        class="container-xxl d-flex flex-wrap gap-3 align-items-center justify-content-between"
+      >
+        <small>© <span id="year"></span> Resound </small>
+        <div class="d-flex gap-3">
+          <a href="#" class="link-secondary">Acerca de</a>
+          <a href="#" class="link-secondary">Términos</a>
+          <a href="#" class="link-secondary">Contacto</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- JS: Bootstrap + App -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      /**
+       * Puntos de integración con tus microservicios
+       * - Usuario API:     GET /api/usuario/me
+       * - Contenido API:   GET /api/contenido/feed?sort=new&page=1&pageSize=24&tag=electronic
+       * - Estadísticas API GET /api/estadisticas/top-artistas?period=7d
+       *
+       * En este prototipo uso datos mock para mostrar la UI.
+       */
+
+      const state = {
+        sort: "new",
+        page: 1,
+        pageSize: 12,
+        tag: null,
+        feed: [],
+        trending: [],
+        topArtists: [],
+      };
+
+      const fmtPrice = (v) =>
+        v === 0
+          ? "Gratis"
+          : new Intl.NumberFormat("es-ES", {
+              style: "currency",
+              currency: "EUR",
+            }).format(v);
+
+      // ======= Simulación de llamadas a APIs =======
+      async function fetchFeed() {
+        // Sustituir por: const res = await fetch(`/api/contenido/feed?sort=${state.sort}&page=${state.page}&pageSize=${state.pageSize}${state.tag ? `&tag=${encodeURIComponent(state.tag)}`:''}`);
+        // const data = await res.json(); state.feed = data.items;
+        const gen = (i) => ({
+          id: i,
+          title: `Álbum #${i}`,
+          artist: ["Luna Roja", "Análogo", "Olas Frías", "Árida", "Kintsugi"][
+            i % 5
+          ],
+          cover: `https://picsum.photos/seed/cover${i}/600/600`,
+          price: [0, 2.5, 5, 7, 9][i % 5],
+          audio: `https://cdn.pixabay.com/download/audio/2021/09/02/audio_2e.mp3?filename=lofi.mp3`,
+          tags: ["electronic", "lofi", "ambient", "rock", "hiphop"].slice(
+            0,
+            (i % 3) + 1,
+          ),
+        });
+        state.feed = Array.from({ length: state.pageSize }, (_, k) =>
+          gen((state.page - 1) * state.pageSize + k + 1),
+        );
+      }
+
+      async function fetchTrending() {
+        state.trending = [1, 2, 3].map((i) => ({
+          id: `t${i}`,
+          title: `Destacado ${i}`,
+          artist: ["Neón Azul", "Tierra", "Isla Sur"][i - 1],
+          cover: `https://picsum.photos/seed/trend${i}/1200/700`,
+          audio: `https://cdn.pixabay.com/download/audio/2021/09/02/audio_2e.mp3?filename=lofi.mp3`,
+        }));
+      }
+
+      async function fetchTopArtists() {
+        state.topArtists = [
+          "Luna Roja",
+          "Análogo",
+          "Olas Frías",
+          "Árida",
+          "Kintsugi",
+          "Neón Azul",
+          "Isla Sur",
+        ];
+      }
+
+      // ======= Render =======
+      function renderFeed() {
+        const grid = document.getElementById("feedGrid");
+        grid.innerHTML = "";
+        state.feed.forEach((item) => {
+          const col = document.createElement("div");
+          col.innerHTML = `
+<article class="col">
+    <div class="card album-card h-100 bg-body-secondary border-0 hover-raise pointer" data-id="${item.id}">
+        <img src="${item.cover}" class="card-img-top" alt="Portada del álbum ${item.title}" />
+        <div class="card-body d-flex flex-column">
+            <h3 class="h6 mb-1 text-truncate" title="${item.title}">${item.title}</h3>
+            <p class="small text-body-secondary mb-2 text-truncate" title="${item.artist}">${item.artist}</p>
+            <div class="mt-auto d-flex align-items-center justify-content-between">
+                <span class="badge rounded-pill price-pill">${fmtPrice(item.price)}</span>
+                <div class="d-flex gap-1 flex-wrap" style="max-width: 60%">
+                    ${item.tags.map((t) => `<span class='badge text-bg-dark'>${t}</span>`).join("")}
+                </div>
+            </div>
+        </div>
+    </div>
+</article>`;
+          grid.appendChild(col.firstElementChild);
+        });
+        bindAlbumClicks();
+        renderPager();
+      }
+
+      function renderTrending() {
+        const inner = document.getElementById("trendingCarouselInner");
+        inner.innerHTML = "";
+        state.trending.forEach((t, idx) => {
+          const div = document.createElement("div");
+          div.className = `carousel-item ${idx === 0 ? "active" : ""}`;
+          div.innerHTML = `
+<img src="${t.cover}" class="d-block w-100 rounded" alt="${t.title}" style="object-fit:cover; aspect-ratio: 16/9;" />
+<div class="carousel-caption text-start">
+    <h3 class="h5">${t.title}</h3>
+    <p class="small">${t.artist}</p>
+    <button class="btn btn-info text-dark fw-semibold btn-sm" data-play='{"src":"${t.audio}","title":"${t.title}","artist":"${t.artist}","cover":"${t.cover}"}'>
+        <i class="bi bi-play-fill me-1"></i> Escuchar
+    </button>
+</div>`;
+          inner.appendChild(div);
+        });
+        inner.querySelectorAll("[data-play]").forEach((btn) =>
+          btn.addEventListener("click", (e) => {
+            const payload = JSON.parse(
+              e.currentTarget.getAttribute("data-play"),
+            );
+            playAudio(payload);
+          }),
+        );
+      }
+
+      function renderTags() {
+        const tags = [
+          "electronic",
+          "ambient",
+          "techno",
+          "rock",
+          "indie",
+          "lofi",
+          "hiphop",
+          "jazz",
+          "trap",
+          "metal",
+        ];
+        const cloud = document.getElementById("tagCloud");
+        cloud.innerHTML = tags
+          .map(
+            (t) =>
+              `<a href="#" class="badge text-bg-dark" data-tag="${t}">#${t}</a>`,
+          )
+          .join("");
+        cloud.querySelectorAll("[data-tag]").forEach((a) =>
+          a.addEventListener("click", (e) => {
+            e.preventDefault();
+            state.tag = e.currentTarget.dataset.tag;
+            state.page = 1;
+            refresh();
+          }),
+        );
+      }
+
+      function renderTopArtists() {
+        const list = document.getElementById("topArtists");
+        list.innerHTML = state.topArtists
+          .map(
+            (name) =>
+              `<li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">${name}<i class="bi bi-graph-up-arrow"></i></li>`,
+          )
+          .join("");
+      }
+
+      function renderPager() {
+        const pager = document.getElementById("pager");
+        pager.innerHTML = "";
+        const prev = document.createElement("li");
+        prev.className = `page-item ${state.page === 1 ? "disabled" : ""}`;
+        prev.innerHTML = `<a class="page-link" href="#" aria-label="Anterior">&laquo;</a>`;
+        prev.onclick = (e) => {
+          e.preventDefault();
+          if (state.page > 1) {
+            state.page--;
+            refresh();
+          }
+        };
+        const next = document.createElement("li");
+        next.className = "page-item";
+        next.innerHTML = `<a class="page-link" href="#" aria-label="Siguiente">&raquo;</a>`;
+        next.onclick = (e) => {
+          e.preventDefault();
+          state.page++;
+          refresh();
+        };
+        pager.append(prev);
+        for (let i = Math.max(1, state.page - 1); i <= state.page + 1; i++) {
+          const li = document.createElement("li");
+          li.className = `page-item ${i === state.page ? "active" : ""}`;
+          li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+          li.onclick = (e) => {
+            e.preventDefault();
+            state.page = i;
+            refresh();
+          };
+          pager.append(li);
+        }
+        pager.append(next);
+      }
+
+      // ======= Player =======
+      const audio = () => document.getElementById("audio");
+      function playAudio({ src, title, artist, cover }) {
+        const a = audio();
+        a.src = src;
+        a.play();
+        document.getElementById("playerTitle").textContent =
+          title || "Reproduciendo";
+        document.getElementById("playerArtist").textContent = artist || "";
+        document.getElementById("playerCover").src =
+          cover || "https://picsum.photos/seed/placeholder/200/200";
+        document.getElementById("btnPlay").innerHTML =
+          '<i class="bi bi-pause-fill"></i>';
+        a.onended = () =>
+          (document.getElementById("btnPlay").innerHTML =
+            '<i class="bi bi-play-fill"></i>');
+      }
+
+      function bindAlbumClicks() {
+        document.querySelectorAll(".album-card").forEach((card) => {
+          card.addEventListener("click", () => {
+            const id = card.getAttribute("data-id");
+            const item = state.feed.find((x) => String(x.id) === String(id));
+            if (item)
+              playAudio({
+                src: item.audio,
+                title: item.title,
+                artist: item.artist,
+                cover: item.cover,
+              });
+          });
+        });
+      }
+
+      function wirePlayerControls() {
+        const a = audio();
+        const seek = document.getElementById("seekBar");
+        a.addEventListener("timeupdate", () => {
+          if (!isNaN(a.duration))
+            seek.value = (a.currentTime / a.duration) * 100;
+        });
+        seek.addEventListener("input", () => {
+          if (!isNaN(a.duration))
+            a.currentTime = (seek.value / 100) * a.duration;
+        });
+        document.getElementById("btnPlay").onclick = () => {
+          if (a.paused) {
+            a.play();
+            document.getElementById("btnPlay").innerHTML =
+              '<i class="bi bi-pause-fill"></i>';
+          } else {
+            a.pause();
+            document.getElementById("btnPlay").innerHTML =
+              '<i class="bi bi-play-fill"></i>';
+          }
+        };
+        document.getElementById("btnMute").onclick = () => {
+          a.muted = !a.muted;
+          document.getElementById("btnMute").innerHTML = a.muted
+            ? '<i class="bi bi-volume-mute"></i>'
+            : '<i class="bi bi-volume-up"></i>';
+        };
+        document.getElementById("btnPrev").onclick = () => {
+          /* opcional: cola */
+        };
+        document.getElementById("btnNext").onclick = () => {
+          /* opcional: cola */
+        };
+      }
+
+      // ======= Refresh (carga inicial) =======
+      async function refresh() {
+        await fetchFeed();
+        renderFeed();
+      }
+
+      // ======= Inicio =======
+      (async function init() {
+        document.getElementById("year").textContent = new Date().getFullYear();
+        renderTags();
+        wirePlayerControls();
+        await Promise.all([fetchTrending(), fetchTopArtists(), fetchFeed()]);
+        renderTrending();
+        renderTopArtists();
+        renderFeed();
+
+        document.querySelectorAll(".sort-item").forEach((a) =>
+          a.addEventListener("click", (e) => {
+            e.preventDefault();
+            document
+              .querySelectorAll(".sort-item")
+              .forEach((x) => x.classList.remove("active"));
+            e.currentTarget.classList.add("active");
+            state.sort = e.currentTarget.dataset.sort;
+            state.page = 1;
+            refresh();
+          }),
+        );
+      })();
+    </script>
+  </body>
+</html>
