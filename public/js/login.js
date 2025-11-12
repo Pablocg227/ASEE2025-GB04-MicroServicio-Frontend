@@ -47,8 +47,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // Mensaje de bienvenida personalizado
         const displayName = result.user_data.display_name || result.user_data.email;
         alert(`🎉 Bienvenido/a, ${displayName}!`);
-        
 
+        // Redirigir según tipo de usuario
+        if (result.user_type === 'artist') {
+          window.location.href = 'artist-dashboard.html';
+        } else if (result.user_data.is_admin) {
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
       } else {
         const error = await response.json();
         alert('⚠️ ' + (error.detail || 'Credenciales incorrectas'));
