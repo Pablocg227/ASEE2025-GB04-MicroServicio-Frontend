@@ -1,0 +1,39 @@
+/* Estilos personalizados para el registro de artistas */
+body {
+  background-color: #f4f6f8;
+}
+
+.container {
+  margin-top: 40px;
+}
+
+h4 {
+  color: #10197a; /* morado oscuro */
+  text-align: center;
+}
+
+.btn-custom {
+  background-color: #10197a;
+  color: white;
+}
+
+.btn-custom:hover {
+  background-color: #10197a;
+}
+
+.form-control, .form-select {
+  border-radius: 0.25rem;
+}
+
+.preview-img {
+  max-height: 120px;
+  display: none;
+}
+
+.footer {
+  text-align: center;
+  padding: 10px 0;
+  background-color: #10197a;
+  color: white;
+  margin-top: 20px;
+}

@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('usuario', form.usuario.value);
             formData.append('nombre_completo', form.nombre_completo.value);
-            formData.append('full_name', form.nombre_completo.value); // Nuevo campo añadido
+            formData.append('full_name', form.nombre_completo.value); 
             formData.append('email', form.email.value);
             formData.append('password', form.password.value);
             formData.append('edad', form.edad.value);
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             alert('¡Registro exitoso!');
-            window.location.href = 'login.html'; // Redirigir al login
+            window.location.href = 'login.html';
         } catch (error) {
             console.error('Error:', error);
             alert(error.message || 'Error al registrar usuario');
