@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       // Endpoint actualizado de autenticación
-      const response = await fetch('http://localhost:8000/auth/login', {
+      const response = await fetch('http://127.0.0.1:8001/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Redirigir según tipo de usuario
         if (result.user_type === 'artist') {
-          window.location.href = 'artist-dashboard.html';
+          window.location.href = 'FormularioSubidaCancion.html';
         } else if (result.user_data.is_admin) {
           window.location.href = 'admin-dashboard.html';
         } else {

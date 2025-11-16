@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ✅ Enviar al backend (sin headers manuales)
     try {
-      const response = await fetch("http://127.0.0.1:8000/artistas/register", {
+      const response = await fetch("http://127.0.0.1:8001/artistas/register", {
         method: "POST",
         body: formData,
       });
