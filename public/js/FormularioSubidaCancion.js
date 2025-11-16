@@ -1,7 +1,7 @@
 // FormularioSubidaCancion.js
 // -------------------------------------------------------------
 // Configura aquí la URL del backend de CONTENIDOS
-const API_BASE = "http://localhost:8080";
+const API_BASE = "http://127.0.0.1:8080";
 
 // Deja el token en localStorage con clave "access_token" tras /auth/login
 // localStorage.setItem("access_token", "<JWT>");
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Debe haber token
-    const TOKEN = localStorage.getItem("access_token");
+    const TOKEN = localStorage.getItem("authToken"); 
     if (!TOKEN) {
       alert(
         "No hay token de sesión. Inicia sesión para poder subir canciones.",
