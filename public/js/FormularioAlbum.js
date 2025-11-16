@@ -34,12 +34,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // -------------------------------------------------------------
+  // 0) Obtener el ID del artista desde el token
+  // -------------------------------------------------------------
+  function getArtistaIdFromToken() {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      console.error("No hay token de sesión");
+      return null;
+    }
+
+    try {
+      // Decodificar el token JWT (el payload está en la segunda parte)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // Asumiendo que el token tiene un campo 'sub' o 'id' con el ID del artista
+      return payload.sub || payload.id || payload.artistaId;
+    } catch (error) {
+      console.error("Error al decodificar el token:", error);
+      return null;
+    }
+  }
+
+  // -------------------------------------------------------------
   // 1) Cargar canciones existentes para poder seleccionarlas
   // -------------------------------------------------------------
-  const urlCanciones = `${API_BASE}/api/canciones`;
-
   function cargarCanciones() {
     if (!cancionesContainer) return;
+
+    const artistaId = getArtistaIdFromToken();
+    if (!artistaId) {
+      cancionesContainer.innerHTML =
+        '<div class="alert alert-danger">No se pudo obtener el ID del artista. Inicia sesión.</div>';
+      return;
+    }
+
+    const urlCanciones = `${API_BASE}/api/artistas/${artistaId}/canciones`;
 
     cancionesContainer.innerHTML =
       '<div class="text-muted p-3">Cargando canciones...</div>';
@@ -199,9 +227,13 @@ document.addEventListener("DOMContentLoaded", () => {
     event.preventDefault();
     event.stopPropagation();
 
+    console.log(">>> submit álbum");
+
+
     form.classList.add("was-validated");
 
     if (!form.checkValidity()) {
+      console.log(">>> form.checkValidity() = false");
       return;
     }
 
@@ -211,8 +243,12 @@ document.addEventListener("DOMContentLoaded", () => {
           genreGrid.querySelectorAll('input[type="checkbox"]:checked'),
         ).map((el) => el.value)
       : [];
+    console.log(">>> selectedGenres:", selectedGenres);
+
 
     if (selectedGenres.length === 0) {
+      console.log(">>> sin géneros, corto aquí");
+
       if (genreInvalid) genreInvalid.style.display = "block";
       return;
     } else if (genreInvalid) {
@@ -221,7 +257,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Validación extra: al menos una canción seleccionada ---
     const selectedSongs = document.querySelectorAll(".song-item.selected");
+    console.log(">>> selectedSongs.length =", selectedSongs.length);
+
     if (selectedSongs.length === 0) {
+      console.log(">>> sin canciones, corto aquí");
       if (songsInvalid) songsInvalid.style.display = "block";
       return;
     } else if (songsInvalid) {
@@ -256,11 +295,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Conexión con el microservicio ---
     const microserviceURL = `${API_BASE}/api/albumes`;
     const token = localStorage.getItem("authToken"); // igual que en login y subida de canción
+    console.log(">>> token =", token ? "OK" : "NO HAY");
+
 
     if (!token) {
       alert("No hay token de sesión. Inicia sesión para poder subir álbumes.");
       return;
     }
+
+    console.log(">>> voy a hacer fetch /api/albumes");
 
     fetch(microserviceURL, {
       method: "POST",

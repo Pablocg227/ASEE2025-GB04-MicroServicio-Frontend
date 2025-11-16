@@ -1,0 +1,61 @@
+# Dependencias
+node_modules/
+
+# Builds y artefactos
+dist/
+build/
+out/
+.storybook-out/
+storybook-static/
+
+# Cachés
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.turbo/
+.next/
+.nuxt/
+.sass-cache/
+coverage/
+.tmp/
+temp/
+tmp/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Entornos
+.env
+.env.local
+.env.*.local
+
+# Editor/OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*.pid
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Cypress (si aplica)
+cypress/videos/
+cypress/screenshots/
+
+# Vercel/Netlify (si aplica)
+.vercel/
+.netlify/
+
+# Otros
+*.orig

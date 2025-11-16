@@ -1,17 +1,26 @@
 {
-  "name": "registro-oyente-bootstrap",
-  "version": "1.0.0",
-  "description": "Proyecto que utiliza Bootstrap para el registro de oyentes.",
-  "main": "src/app.js",
-  "scripts": {
-    "start": "node src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "bootstrap": "^5.3.0"
-  },
-  "devDependencies": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
-}
+	"name": "registro-oyente-bootstrap",
+	"version": "1.0.0",
+	"description": "Proyecto que utiliza Bootstrap para el registro de oyentes.",
+	"main": "src/app.js",
+	"scripts": {
+		"name": "registro-artista",
+		"version": "1.0.0",
+		"description": "Proyecto de registro de artistas. Incluye Bootstrap.",
+		"main": "src/app.js",
+		"scripts": {
+			"dev": "live-server public --port=5500 --no-browser",
+			"start": "node src/app.js",
+			"test": "echo \"Error: no test specified\" && exit 1"
+		},
+		"dependencies": {
+			"bootstrap": "^5.3.0"
+		},
+		"devDependencies": {
+			"live-server": "^1.2.2"
+		},
+		"keywords": [],
+		"author": "",
+		"license": "ISC"
+	}
+
