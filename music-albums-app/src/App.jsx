@@ -1,26 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { fetchArtistAlbums, fetchArtistSongs, getArtistEmailFromToken } from './services/api';
-import AlbumList from './components/AlbumList';
-import SongList from './components/SongList';
-import './styles/App.css';
+import React, { useState, useEffect } from "react";
+import {
+  fetchArtistAlbums,
+  fetchArtistSongs,
+  getArtistEmailFromToken,
+} from "./services/api";
+import AlbumList from "./components/AlbumList";
+import SongList from "./components/SongList";
+
+import PublicCatalog from "./components/PublicCatalog";
+import PublicSongDetail from "./components/PublicSongDetail";
+import PublicAlbumCatalog from "./components/PublicAlbumCatalog";
+import PublicAlbumDetail from "./components/PublicAlbumDetail";
+
+import "./styles/App.css";
 
 function App() {
   const [albums, setAlbums] = useState([]);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [artistEmail, setArtistEmail] = useState(null);
-  const [activeTab, setActiveTab] = useState('albums'); // 'albums' o 'songs'
+  const [activeTab, setActiveTab] = useState("albums"); // 'albums' o 'songs'
+
+  // modos de vista:
+  // - 'catalog' / 'song'  -> catálogo público de canciones y detalle de canción
+  // - 'albums' / 'album'  -> catálogo público de álbumes y detalle de álbum
+  // - 'artist'            -> panel de artista
+  const [viewMode, setViewMode] = useState("catalog");
+  const [selectedSongId, setSelectedSongId] = useState(null);
+  const [selectedAlbumId, setSelectedAlbumId] = useState(null);
+  const [isListenerLoggedIn, setIsListenerLoggedIn] = useState(false);
 
   useEffect(() => {
-    const email = getArtistEmailFromToken();
-    if (email) {
-      setArtistEmail(email);
-      loadData(email);
-    } else {
-      setLoading(false);
-      alert('No se encontró el token de autenticación');
-      window.location.href = '/login.html';
+    const token = localStorage.getItem("authToken");
+    const storedUserType = localStorage.getItem("userType");
+
+    // Si hay token y es un artista, mostramos directamente el panel de artista
+    if (token && storedUserType === "artist") {
+      const email = getArtistEmailFromToken();
+      if (email) {
+        setArtistEmail(email);
+        setViewMode("artist");
+        loadData(email);
+        return;
+      }
     }
+
+    // Para oyentes (user) o usuarios anónimos, la vista por defecto es el catálogo público
+    if (token && storedUserType === "user") {
+      setIsListenerLoggedIn(true);
+    } else {
+      setIsListenerLoggedIn(false);
+    }
+
+    setViewMode("catalog");
+    setLoading(false);
   }, []);
 
   const loadData = async (email) => {
@@ -28,13 +61,13 @@ function App() {
       setLoading(true);
       const [albumsData, songsData] = await Promise.all([
         fetchArtistAlbums(email),
-        fetchArtistSongs(email)
+        fetchArtistSongs(email),
       ]);
       setAlbums(albumsData);
       setSongs(songsData);
     } catch (error) {
-      console.error('Error loading data:', error);
-      alert('Error al cargar los datos del artista');
+      console.error("Error loading data:", error);
+      alert("Error al cargar los datos del artista");
     } finally {
       setLoading(false);
     }
@@ -47,55 +80,183 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    window.location.href = '/login.html';
+    // Limpiar cualquier información de autenticación que pueda existir
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("tokenType");
+    localStorage.removeItem("userType");
+    localStorage.removeItem("userData");
+
+    setArtistEmail(null);
+    setIsListenerLoggedIn(false);
+    setAlbums([]);
+    setSongs([]);
+    setActiveTab("albums");
+    setViewMode("catalog");
+    setSelectedSongId(null);
+    setSelectedAlbumId(null);
+    setLoading(false);
+  };
+
+  const handleLoginClick = () => {
+    // Redirige a la página clásica de login del microservicio de usuarios
+    window.location.href = "/login.html";
+  };
+
+  // Eventos de oyente
+  const handleSelectSong = (songId) => {
+    setSelectedSongId(songId);
+    setViewMode("song");
+  };
+
+  const handleBackToSongCatalog = () => {
+    setSelectedSongId(null);
+    setViewMode("catalog");
+  };
+
+  const handleSelectAlbum = (albumId) => {
+    setSelectedAlbumId(albumId);
+    setViewMode("album");
+  };
+
+  const handleBackToAlbumCatalog = () => {
+    setSelectedAlbumId(null);
+    setViewMode("albums");
   };
 
   if (loading) {
     return <div className="loading">Cargando...</div>;
   }
 
+  const isSongView = viewMode === "catalog" || viewMode === "song";
+  const isAlbumView = viewMode === "albums" || viewMode === "album";
+
   return (
     <div className="App">
       <header className="app-header">
-        <h1>Gestión de Contenido Musical</h1>
+        {/* si quieres el título viejo de develop, cambia este texto */}
+        <h1>Resound</h1>
         <div className="header-info">
-          <span>Artista: {artistEmail}</span>
-          <button onClick={handleLogout} className="btn-logout">
-            Cerrar Sesión
-          </button>
+          {/* Vista de oyente: botones de exploración + login/logout */}
+          {!artistEmail && (
+            <>
+              <div className="header-modes">
+                <button
+                  type="button"
+                  className={`btn-mode ${isSongView ? "active" : ""}`}
+                  onClick={() => {
+                    setViewMode("catalog");
+                    setSelectedSongId(null);
+                    setSelectedAlbumId(null);
+                  }}
+                >
+                  Explorar canciones
+                </button>
+                <button
+                  type="button"
+                  className={`btn-mode ${isAlbumView ? "active" : ""}`}
+                  onClick={() => {
+                    setViewMode("albums");
+                    setSelectedAlbumId(null);
+                    setSelectedSongId(null);
+                  }}
+                >
+                  Explorar álbumes
+                </button>
+              </div>
+
+              <div className="header-auth">
+                {isListenerLoggedIn ? (
+                  <button
+                    type="button"
+                    className="btn-auth"
+                    onClick={handleLogout}
+                  >
+                    Cerrar sesión
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-auth"
+                    onClick={handleLoginClick}
+                  >
+                    Iniciar sesión
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {artistEmail && (
+            <div className="header-artist">
+              <span>Artista: {artistEmail}</span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="btn-logout"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
-      <div className="tabs">
-        <button 
-          className={`tab ${activeTab === 'albums' ? 'active' : ''}`}
-          onClick={() => setActiveTab('albums')}
-        >
-          Mis Álbumes ({albums.length})
-        </button>
-        <button 
-          className={`tab ${activeTab === 'songs' ? 'active' : ''}`}
-          onClick={() => setActiveTab('songs')}
-        >
-          Mis Canciones ({songs.length})
-        </button>
-      </div>
+      {/* VISTAS DE OYENTE */}
+      {!artistEmail && viewMode === "catalog" && (
+        <PublicCatalog onSelectSong={handleSelectSong} />
+      )}
 
-      <div className="main-content">
-        {activeTab === 'albums' ? (
-          <AlbumList 
-            albums={albums} 
-            onUpdate={handleUpdate}
-          />
-        ) : (
-          <SongList 
-            songs={songs} 
-            onUpdate={handleUpdate}
-            showAlbumColumn={true}
-          />
-        )}
-      </div>
+      {!artistEmail && viewMode === "song" && selectedSongId != null && (
+        <PublicSongDetail
+          songId={selectedSongId}
+          onBack={handleBackToSongCatalog}
+        />
+      )}
+
+      {!artistEmail && viewMode === "albums" && (
+        <PublicAlbumCatalog onSelectAlbum={handleSelectAlbum} />
+      )}
+
+      {!artistEmail && viewMode === "album" && selectedAlbumId != null && (
+        <PublicAlbumDetail
+          albumId={selectedAlbumId}
+          onBack={handleBackToAlbumCatalog}
+        />
+      )}
+
+      {/* PANEL DE ARTISTA */}
+      {artistEmail && viewMode === "artist" && (
+        <>
+          <div className="tabs">
+            <button
+              type="button"
+              className={`tab ${activeTab === "albums" ? "active" : ""}`}
+              onClick={() => setActiveTab("albums")}
+            >
+              Mis Álbumes ({albums.length})
+            </button>
+            <button
+              type="button"
+              className={`tab ${activeTab === "songs" ? "active" : ""}`}
+              onClick={() => setActiveTab("songs")}
+            >
+              Mis Canciones ({songs.length})
+            </button>
+          </div>
+
+          <div className="main-content">
+            {activeTab === "albums" ? (
+              <AlbumList albums={albums} onUpdate={handleUpdate} />
+            ) : (
+              <SongList
+                songs={songs}
+                onUpdate={handleUpdate}
+                showAlbumColumn={true}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

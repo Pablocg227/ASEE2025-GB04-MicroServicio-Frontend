@@ -19,10 +19,9 @@ const EditModal = ({ type, data, onClose, onSave }) => {
     imgPortada: data.imgPortada || "",
   });
 
-  // nuevo: fichero de portada seleccionada (si el usuario cambia la imagen)
+  // fichero de portada seleccionada (si el usuario cambia la imagen)
   const [coverFile, setCoverFile] = useState(null);
 
-  const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
   const [allGenres, setAllGenres] = useState([]);
@@ -97,7 +96,7 @@ const EditModal = ({ type, data, onClose, onSave }) => {
             date: formData.date,
             precio: parseFloat(formData.precio),
             genre: selectedGenres,
-            // si necesitas pasar canciones_ids / artista_emails, aquí
+            // si quieres, aquí puedes añadir canciones_ids / artista_emails
           },
           coverFile,
         );
@@ -110,7 +109,7 @@ const EditModal = ({ type, data, onClose, onSave }) => {
             precio: parseFloat(formData.precio),
             genres: selectedGenres,
             idAlbum: data.idAlbum ?? null,
-            // artista_emails si toca
+            // artista_emails si hace falta
           },
           coverFile,
         );
@@ -215,9 +214,6 @@ const EditModal = ({ type, data, onClose, onSave }) => {
               accept="image/*"
               onChange={handleCoverFileChange}
             />
-            {uploadingCover && (
-              <p className="upload-status">Subiendo portada…</p>
-            )}
             {uploadError && <p className="upload-error">{uploadError}</p>}
           </div>
 
