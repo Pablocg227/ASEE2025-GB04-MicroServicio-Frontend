@@ -6,7 +6,7 @@ const USERS_BASE_URL = "http://127.0.0.1:8001"; // msUsuarios
 const api = axios.create({
   baseURL: CONTENTS_BASE_URL,
   headers: {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json", // solo para peticiones JSON
   },
 });
 
@@ -55,35 +55,77 @@ export const fetchArtistSongs = async (artistEmail) => {
   }
 };
 
-// Normaliza arrays/fecha y ENVÍA SOLO CAMPOS EDITABLES
+// Normaliza fecha
 const toISODate = (d) => (d ? String(d).slice(0, 10) : null);
 
-export const updateAlbum = (albumId, data) => {
-  const payload = {
-    titulo: data.titulo,
-    imgPortada: data.imgPortada || null,
-    genre: Array.isArray(data.genre) ? data.genre : [],
-    date: (data.date || "").slice(0, 10),
-    precio: Number(data.precio ?? 0),
-  };
-  if (Array.isArray(data.canciones_ids)) {
-    payload.canciones_ids = data.canciones_ids; // Solo si quieres modificar lista
+/* ----------------------------------------------------------
+   🟦 updateAlbum → enviar FormData con portada opcional
+---------------------------------------------------------- */
+export const updateAlbum = async (albumId, data, coverFile) => {
+  const form = new FormData();
+
+  if (data.titulo !== undefined) form.append("titulo", data.titulo);
+  if (data.precio !== undefined) form.append("precio", data.precio);
+  if (data.date) form.append("date", toISODate(data.date));
+
+  if (Array.isArray(data.genre)) {
+    data.genre.forEach((g) => form.append("genre", g));
   }
-  return api.put(`/albumes/${albumId}`, payload).then((r) => r.data);
+
+  if (Array.isArray(data.canciones_ids)) {
+    data.canciones_ids.forEach((id) => form.append("canciones_ids", id));
+  }
+
+  if (Array.isArray(data.artista_emails)) {
+    data.artista_emails.forEach((email) =>
+      form.append("artista_emails", email),
+    );
+  }
+
+  if (coverFile) {
+    form.append("portada", coverFile);
+  }
+
+  const response = await api.put(`/albumes/${albumId}`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return response.data;
 };
 
-export const updateSong = (songId, data) => {
-  const payload = {
-    nomCancion: data.nomCancion || data.titulo,
-    imgPortada: data.imgPortada || null,
-    genres: Array.isArray(data.genres) ? data.genres : [],
-    date: toISODate(data.date),
-    precio: Number(data.precio ?? 0),
-    idAlbum: data.idAlbum ?? null,
-    // NUNCA enviar: artistas_emails, numLikes, numIngresos, numVisualizaciones, etc.
-  };
-  // console.log('PUT /canciones payload', payload);
-  return api.put(`/canciones/${songId}`, payload).then((r) => r.data);
+/* ----------------------------------------------------------
+   🟩 updateSong → enviar FormData con portada opcional
+---------------------------------------------------------- */
+export const updateSong = async (songId, data, coverFile) => {
+  const form = new FormData();
+
+  form.append("nomCancion", data.nomCancion || data.titulo);
+  if (data.precio !== undefined) form.append("precio", data.precio);
+  if (data.date) form.append("date", toISODate(data.date));
+
+  if (data.idAlbum !== undefined && data.idAlbum !== null) {
+    form.append("idAlbum", data.idAlbum);
+  }
+
+  if (Array.isArray(data.genres)) {
+    data.genres.forEach((g) => form.append("generos", g));
+  }
+
+  if (Array.isArray(data.artista_emails)) {
+    data.artista_emails.forEach((email) =>
+      form.append("artista_emails", email),
+    );
+  }
+
+  if (coverFile) {
+    form.append("portada", coverFile);
+  }
+
+  const response = await api.put(`/canciones/${songId}`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return response.data;
 };
 
 // Eliminar álbum
@@ -107,6 +149,7 @@ export const deleteSong = async (songId) => {
     throw error;
   }
 };
+
 // =====================================
 // endpoints PÚBLICOS oyente RF-4.3
 // =====================================
@@ -140,10 +183,6 @@ export const fetchAlbumTracks = async (albumId) => {
   const response = await api.get(`/albumes/${albumId}/canciones`);
   return response.data;
 };
-
-// =====================================
-// Microservicio usuarios – datos de artistas
-// =====================================
 
 // Registrar reproducción de una canción (incrementa numVisualizaciones)
 export const registerSongPlay = async (songId) => {

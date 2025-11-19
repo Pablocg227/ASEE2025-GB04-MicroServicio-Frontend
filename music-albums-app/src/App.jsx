@@ -24,7 +24,7 @@ function App() {
   // modos de vista:
   // - 'catalog' / 'song'  -> catálogo público de canciones y detalle de canción
   // - 'albums' / 'album'  -> catálogo público de álbumes y detalle de álbum
-  // - 'artist'            -> panel de artista (igual que antes)
+  // - 'artist'            -> panel de artista
   const [viewMode, setViewMode] = useState("catalog");
   const [selectedSongId, setSelectedSongId] = useState(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
@@ -133,6 +133,7 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
+        {/* si quieres el título viejo de develop, cambia este texto */}
         <h1>Resound</h1>
         <div className="header-info">
           {/* Vista de oyente: botones de exploración + login/logout */}
@@ -223,7 +224,7 @@ function App() {
         />
       )}
 
-      {/* PANEL DE ARTISTA (igual que antes, sin botón en el header) */}
+      {/* PANEL DE ARTISTA */}
       {artistEmail && viewMode === "artist" && (
         <>
           <div className="tabs">
