@@ -67,5 +67,31 @@ export const fetchSongById = async (songId) => {
   }
 };
 
-// export const updateUser = async (email, data) => { ... }
-// export const deleteUser = async (email) => { ... }
+// 1. Obtener lista de compras de álbumes
+export const fetchUserAlbumPurchases = async (email) => {
+  try {
+    // Nota: Asumo que COMPRAS_API_URL es 'http://127.0.0.1:8080/api' basado en tu código anterior
+    const response = await fetch(`${COMPRAS_API_URL}/compras/albumes?user_ref=${encodeURIComponent(email)}`);
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching album purchases:', error);
+    throw error;
+  }
+};
+
+// 2. Obtener detalle de un álbum por ID
+export const fetchAlbumById = async (albumId) => {
+  try {
+    const response = await fetch(`${COMPRAS_API_URL}/albumes/${albumId}`);
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching album details:', error);
+    throw error;
+  }
+};

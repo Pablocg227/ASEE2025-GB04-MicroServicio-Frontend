@@ -1,7 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import useUser from '../hooks/useUser';
-import { fetchUserPurchases, fetchSongById } from '../services/api';
+import { 
+  fetchUserPurchases, 
+  fetchSongById, 
+  fetchUserAlbumPurchases, 
+  fetchAlbumById 
+} from '../services/api';
 import '../styles/ProfilePage.css';
 
 const API_BASE_URL = 'http://127.0.0.1:8001';
@@ -9,12 +14,16 @@ const FILES_BASE_URL = 'http://127.0.0.1:8080';
 
 export default function ProfilePage() {
   const { email } = useParams();
+  const navigate = useNavigate();
   const { user, loading, error } = useUser(email);
+  
   const [showEditModal, setShowEditModal] = useState(false);
-  const [purchases, setPurchases] = useState([]);
   const [purchasedSongs, setPurchasedSongs] = useState([]);
+  const [purchasedAlbums, setPurchasedAlbums] = useState([]);
+  const [activeTab, setActiveTab] = useState('songs');
   const [purchasesLoading, setPurchasesLoading] = useState(true);
-  const [isOwner, setIsOwner] = useState(false); // Nuevo estado
+  const [isOwner, setIsOwner] = useState(false);
+  
   const [editForm, setEditForm] = useState({
     display_name: '',
     password: '',
@@ -23,7 +32,7 @@ export default function ProfilePage() {
   const [previewAvatar, setPreviewAvatar] = useState(null);
   const avatarInputRef = useRef(null);
 
-  // Verificar si el usuario autenticado es el dueño del perfil
+  // 1. Verificar propiedad
   useEffect(() => {
     const checkOwnership = async () => {
       const token = localStorage.getItem('authToken');
@@ -31,14 +40,10 @@ export default function ProfilePage() {
         setIsOwner(false);
         return;
       }
-
       try {
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-
         if (response.ok) {
           const data = await response.json();
           const currentUserEmail = data.user_data?.email || data.email;
@@ -47,40 +52,42 @@ export default function ProfilePage() {
           setIsOwner(false);
         }
       } catch (err) {
-        console.error('Error verificando propiedad del perfil:', err);
+        console.error(err);
         setIsOwner(false);
       }
     };
-
     checkOwnership();
   }, [email]);
 
+  // 2. Cargar Compras
   useEffect(() => {
     if (email) {
-      fetchUserPurchases(email)
-        .then(async (purchaseIds) => {
-          setPurchases(purchaseIds);
-          
-          const songsPromises = purchaseIds.map(id => fetchSongById(id));
+      setPurchasesLoading(true);
+      const loadAllPurchases = async () => {
+        try {
+          // Cargar Canciones
+          const songPurchaseIds = await fetchUserPurchases(email);
+          const songsPromises = songPurchaseIds.map(p => fetchSongById(p.idCancion || p));
           const songs = await Promise.all(songsPromises);
           setPurchasedSongs(songs);
+
+          // Cargar Álbumes
+          const albumPurchasesData = await fetchUserAlbumPurchases(email);
+          const albumsPromises = albumPurchasesData.map(p => fetchAlbumById(p.idAlbum || p));
+          const albums = await Promise.all(albumsPromises);
+          setPurchasedAlbums(albums);
+
+        } catch (err) {
+          console.error(err);
+        } finally {
           setPurchasesLoading(false);
-        })
-        .catch(err => {
-          console.error('Error al cargar compras:', err);
-          setPurchasesLoading(false);
-        });
+        }
+      };
+      loadAllPurchases();
     }
   }, [email]);
 
-  if (loading) return <div className="profile-page loading">Cargando perfil...</div>;
-  if (error) return <div className="profile-page error">Error: {error.message}</div>;
-  if (!user) return <div className="profile-page error">Usuario no encontrado</div>;
-
-  const username = user.display_name || 'Usuario';
-  const collectionsCount = purchases.length || 0;
-  const backendAvatarUrl = user.avatar_url ? `${API_BASE_URL}${user.avatar_url}` : null;
-
+  // Handlers del Modal
   const handleOpenEdit = () => {
     setEditForm({
       display_name: user.display_name || '',
@@ -90,11 +97,7 @@ export default function ProfilePage() {
     setPreviewAvatar(null);
     setShowEditModal(true);
   };
-
-  const handleCloseEdit = () => {
-    setShowEditModal(false);
-    setPreviewAvatar(null);
-  };
+  const handleCloseEdit = () => setShowEditModal(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -111,7 +114,6 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     const formData = new FormData();
     formData.append('display_name', editForm.display_name);
     if (editForm.password) formData.append('password', editForm.password);
@@ -122,78 +124,130 @@ export default function ProfilePage() {
         method: 'PUT',
         body: formData
       });
-
-      if (!response.ok) throw new Error('Error al actualizar perfil');
-
-      alert('Perfil actualizado correctamente');
+      if (!response.ok) throw new Error('Error update');
+      alert('Perfil actualizado');
       handleCloseEdit();
-      window.location.reload(); // Recargar para mostrar cambios
+      window.location.reload();
     } catch (err) {
       alert('Error: ' + err.message);
     }
   };
 
+  if (loading) return <div className="loading">Cargando...</div>;
+  if (error) return <div className="error">{error.message}</div>;
+  if (!user) return <div className="error">Usuario no encontrado</div>;
+
+  const username = user.display_name || 'Usuario';
+  const backendAvatarUrl = user.avatar_url ? `${API_BASE_URL}${user.avatar_url}` : null;
+
   return (
     <div className="profile-page">
-      <section className="profile-header">
-        <div className="avatar-box">
-          {backendAvatarUrl ? (
-            <img src={backendAvatarUrl} alt="avatar" />
-          ) : (
-            <div className="avatar-placeholder">
-              <span className="cam">?</span>
-            </div>
-          )}
-        </div>
+      
+      {/* HEADER */}
+      <div className="profile-header-container">
 
-        <div className="profile-meta">
-          <div className="title-row">
+        {/* 0. BOTÓN VOLVER (Ahora vive aquí dentro) */}
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <span>←</span> Volver
+        </button>
+        <div className="profile-banner"></div>
+        <div className="profile-header-content">
+          <div className="avatar-box">
+            {backendAvatarUrl ? (
+              <img src={backendAvatarUrl} alt="avatar" />
+            ) : (
+              <div className="avatar-placeholder">{username.charAt(0).toUpperCase()}</div>
+            )}
+          </div>
+
+          <div className="profile-info">
             <h1>{username}</h1>
-            <div className="actions">
+            <div className="profile-actions">
               {isOwner && (
-                <button className="btn btn-outline" onClick={handleOpenEdit}>
-                  EDITAR PERFIL
-                </button>
+                <button className="btn-edit" onClick={handleOpenEdit}>Editar Perfil</button>
               )}
-              <button className="link">compartir perfil</button>
+              <button className="btn-share">Compartir</button>
             </div>
           </div>
-
-          <nav className="tabs">
-            <button className="tab active">{collectionsCount} compras</button>
-          </nav>
         </div>
-      </section>
 
-      <main className="profile-content">
+        <div className="profile-tabs-container">
+          <div className="profile-tabs">
+            <button 
+              className={`tab-btn ${activeTab === 'songs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('songs')}
+            >
+              Canciones ({purchasedSongs.length})
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'albums' ? 'active' : ''}`}
+              onClick={() => setActiveTab('albums')}
+            >
+              Álbumes ({purchasedAlbums.length})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* GRID CONTENIDO */}
+      <main className="purchases-grid">
         {purchasesLoading ? (
-          <div>Cargando compras...</div>
-        ) : collectionsCount === 0 ? (
-          <div className="empty-state">
-            <p>Este usuario no tiene compras... </p>
-          </div>
+          <div className="loading">Cargando colección...</div>
         ) : (
-          <div className="purchases-grid">
-            {purchasedSongs.map(song => (
-              <div key={song.id} className="purchase-item">
-                <img 
-                  src={`${FILES_BASE_URL}${song.imgPortada}?t=${Date.now()}`}
-                  alt={song.nomCancion}
-                  className="song-cover"
-                  onError={(e) => {
-                    console.error('Error cargando imagen:', `${FILES_BASE_URL}${song.imgPortada}`);
-                    e.target.src = '/placeholder-song.png';
-                  }}
-                />
-                <h3>{song.nomCancion}</h3>
-                <p>{song.artistas_emails?.[0] || 'Artista desconocido'}</p>
-              </div>
-            ))}
-          </div>
+          <>
+            {/* VISTA CANCIONES */}
+            {activeTab === 'songs' && (
+              purchasedSongs.length > 0 ? (
+                purchasedSongs.map(song => (
+                  <div key={song.id} className="purchase-card">
+                    <div className="card-image">
+                      <img 
+                        src={`${FILES_BASE_URL}${song.imgPortada || song.portada}?t=${Date.now()}`}
+                        alt={song.nomCancion}
+                        onError={(e) => e.target.src = 'https://via.placeholder.com/200'}
+                      />
+                    </div>
+                    <div className="card-details">
+                      <h3>{song.nomCancion}</h3>
+                      {/* Aquí también corregimos por si acaso: artistas_emails */}
+                      <p>{song.artistas_emails?.[0] || 'Artista desconocido'}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-msg">No tienes canciones compradas.</div>
+              )
+            )}
+
+            {/* VISTA ÁLBUMES */}
+            {activeTab === 'albums' && (
+              purchasedAlbums.length > 0 ? (
+                purchasedAlbums.map(album => (
+                  <div key={album.id} className="purchase-card">
+                    <div className="card-image">
+                      <img 
+                        src={`${FILES_BASE_URL}${album.imgPortada || album.portada}?t=${Date.now()}`}
+                        alt={album.titulo}
+                        onError={(e) => e.target.src = 'https://via.placeholder.com/200'}
+                      />
+                    </div>
+                    <div className="card-details">
+                      <h3>{album.titulo}</h3>
+                      {/* AQUÍ ESTABA EL ERROR: era "artista_emails" y ahora es "artistas_emails" */}
+                      <p>{album.artistas_emails?.[0] || 'Varios Artistas'}</p>
+                      <span className="badge-album">Álbum</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-msg">No tienes álbumes comprados.</div>
+              )
+            )}
+          </>
         )}
       </main>
 
-      {/* Modal de edición */}
+      {/* MODAL EDITAR */}
       {showEditModal && (
         <div className="modal-overlay" onClick={handleCloseEdit}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -201,66 +255,28 @@ export default function ProfilePage() {
               <h2>Editar Perfil</h2>
               <button className="close-btn" onClick={handleCloseEdit}>&times;</button>
             </div>
-
             <form onSubmit={handleSubmit} className="edit-form">
               <div className="form-group">
                 <label>Imagen de perfil</label>
                 <div className="avatar-upload">
                   {(previewAvatar || backendAvatarUrl) && (
-                    <img 
-                      src={previewAvatar || backendAvatarUrl} 
-                      alt="preview" 
-                      className="avatar-preview"
-                    />
+                    <img src={previewAvatar || backendAvatarUrl} alt="preview" className="avatar-preview"/>
                   )}
-                  <button 
-                    type="button" 
-                    className="btn btn-outline"
-                    onClick={() => avatarInputRef.current?.click()}
-                  >
-                    Cambiar imagen
-                  </button>
-                  <input
-                    ref={avatarInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    hidden
-                  />
+                  <button type="button" className="btn btn-outline" onClick={() => avatarInputRef.current?.click()}>Cambiar imagen</button>
+                  <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} hidden />
                 </div>
               </div>
-
               <div className="form-group">
-                <label htmlFor="display_name">Nombre de usuario</label>
-                <input
-                  type="text"
-                  id="display_name"
-                  name="display_name"
-                  value={editForm.display_name}
-                  onChange={handleInputChange}
-                  required
-                />
+                <label>Nombre de usuario</label>
+                <input type="text" name="display_name" value={editForm.display_name} onChange={handleInputChange} required />
               </div>
-
               <div className="form-group">
-                <label htmlFor="password">Nueva contraseña (opcional)</label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={editForm.password}
-                  onChange={handleInputChange}
-                  placeholder="Dejar en blanco para mantener la actual"
-                />
+                <label>Nueva contraseña (opcional)</label>
+                <input type="password" name="password" value={editForm.password} onChange={handleInputChange} placeholder="Dejar en blanco para mantener la actual" />
               </div>
-
               <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={handleCloseEdit}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Guardar cambios
-                </button>
+                <button type="button" className="btn btn-outline" onClick={handleCloseEdit}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">Guardar</button>
               </div>
             </form>
           </div>
