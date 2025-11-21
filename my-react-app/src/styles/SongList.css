@@ -1,0 +1,58 @@
+.song-list {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.no-songs {
+    text-align: center;
+    color: #999;
+    padding: 40px;
+}
+
+.songs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.songs-table thead {
+    background-color: #f8f9fa;
+}
+
+.songs-table th, .songs-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.songs-table th {
+    font-weight: 600;
+    color: #333;
+}
+
+.songs-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit-small, .btn-delete-small {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.btn-edit-small:hover {
+    background-color: #e7f1ff;
+}
+
+.btn-delete-small:hover {
+    background-color: #ffe7e7;
+}

@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (result.user_data.is_admin) {
           window.location.href = 'admin-dashboard.html';
         } else {
-          window.location.href = 'dashboard.html';
+          window.location.href = '/musica';
         }
       } else {
         const error = await response.json();
