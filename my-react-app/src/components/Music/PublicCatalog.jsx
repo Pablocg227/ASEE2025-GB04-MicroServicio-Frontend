@@ -3,9 +3,9 @@ import {
   fetchPublicSongs,
   fetchPublicAlbums,
   fetchArtistsByEmails,
-} from "../services/api";
+} from "../../services/musicApi";
 
-import { fileURL } from "../utils/helpers";
+import { fileURL } from "../../utils/helpers";
 
 // Intenta sacar un texto bonito para el artista, sea como sea que venga del backend
 const getArtistLabel = (song) => {

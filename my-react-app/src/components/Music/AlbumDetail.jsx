@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAlbumDetails, fetchAlbumSongs } from '../services/api';
+import { fetchAlbumDetails, fetchAlbumSongs } from '../../services/musicApi';
 import SongList from './SongList';
 import EditModal from './EditModal';
-import '../styles/AlbumDetail.css';
+import '../../styles/AlbumDetail.css';
 
 const AlbumDetail = ({ albumId, onBack }) => {
     const [album, setAlbum] = useState(null);

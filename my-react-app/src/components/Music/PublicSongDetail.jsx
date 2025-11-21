@@ -5,10 +5,10 @@ import {
   fetchArtistsByEmails,
   registerSongPlay,
   purchaseSong,
-  getStoredUserEmail,
-} from "../services/api";
+  getStoredUserEmail
+} from "../../services/musicApi";
 
-import { fileURL } from "../utils/helpers";
+import { fileURL } from "../../utils/helpers";
 
 const formatPrice = (value) => {
   if (value === null || value === undefined) return "No disponible";

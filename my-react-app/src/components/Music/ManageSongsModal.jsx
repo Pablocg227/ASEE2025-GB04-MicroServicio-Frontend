@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { fetchArtistSongs, getArtistEmailFromToken, updateAlbum } from '../services/api';
-import '../styles/EditModal.css';
+import { fetchArtistSongs, getArtistEmailFromToken, updateAlbum } from '../../services/musicApi';
+import '../../styles/EditModal.css';
 
 const ManageSongsModal = ({ album, onClose, onUpdated }) => {
   const [allSongs, setAllSongs] = useState([]);
