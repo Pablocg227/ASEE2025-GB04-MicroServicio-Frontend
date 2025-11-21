@@ -4,6 +4,8 @@ import {
   fetchAlbumById,
   fetchArtistsByEmails,
   registerSongPlay,
+  purchaseSong,
+  getStoredUserEmail
 } from "../../services/musicApi";
 
 import { fileURL } from "../../utils/helpers";
@@ -50,6 +52,11 @@ const PublicSongDetail = ({ songId, onBack }) => {
   const [plays, setPlays] = useState(0);
   const [album, setAlbum] = useState(null);
   const [artistName, setArtistName] = useState("");
+  const [showPurchase, setShowPurchase] = useState(false);
+  const [payAmount, setPayAmount] = useState("");
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [purchaseError, setPurchaseError] = useState("");
+  const [purchaseOk, setPurchaseOk] = useState("");
 
   useEffect(() => {
     const loadSong = async () => {
@@ -60,6 +67,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
         const data = await fetchSongById(songId);
         setSong(data);
         setPlays(data.numVisualizaciones || 0);
+        setPayAmount(data.precio ?? "");
 
         // --- Álbum al que pertenece, si lo hay ---
         if (data.idAlbum != null) {
@@ -134,6 +142,71 @@ const PublicSongDetail = ({ songId, onBack }) => {
     } catch (error) {
       console.error("Error registrando reproducción:", error);
       // Podrías revertir el +1 si quisieras ser estricto
+    }
+  };
+
+  const openPurchaseModal = () => {
+    setPurchaseError("");
+    setPurchaseOk("");
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setPurchaseError("Necesitas iniciar sesión para comprar.");
+    }
+    setShowPurchase(true);
+  };
+
+  const closePurchaseModal = () => {
+    if (purchaseLoading) return;
+    setShowPurchase(false);
+    setPurchaseError("");
+    setPurchaseOk("");
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!song) return;
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setPurchaseError("Inicia sesión para completar la compra.");
+      return;
+    }
+
+    const email = getStoredUserEmail();
+    if (!email) {
+      setPurchaseError("No se pudo leer el email del usuario.");
+      return;
+    }
+
+    const amount =
+      payAmount === "" || payAmount === null
+        ? null
+        : Number.parseFloat(payAmount);
+
+    if (payAmount !== "" && (Number.isNaN(amount) || amount < 0)) {
+      setPurchaseError("Introduce un importe válido (0€ o más).");
+      return;
+    }
+
+    setPurchaseLoading(true);
+    setPurchaseError("");
+    setPurchaseOk("");
+
+    try {
+      await purchaseSong({
+        songId: song.id,
+        pricePaid: amount,
+        userEmail: email,
+      });
+      setPurchaseOk("Compra realizada correctamente. ¡Disfruta tu pista!");
+    } catch (error) {
+      const msg =
+        error?.response?.data?.detail ||
+        error?.message ||
+        "No se pudo completar la compra.";
+      setPurchaseError(msg);
+    } finally {
+      setPurchaseLoading(false);
     }
   };
 
@@ -230,16 +303,66 @@ const PublicSongDetail = ({ songId, onBack }) => {
           </div>
 
           <div className="song-purchase">
-            <button type="button" className="btn-primary" disabled>
+            <button type="button" className="btn-primary" onClick={openPurchaseModal}>
               Comprar pista digital {formatPrice(song.precio)}
             </button>
             <p className="purchase-note">
-              (El flujo de compra se implementará en otro requisito. De momento
-              este botón no realiza ninguna acción.)
+              Recibirás la pista y las futuras descargas ligadas a tu cuenta.
             </p>
           </div>
         </div>
       </div>
+
+      {showPurchase && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <h3>Confirmar compra</h3>
+            <p className="modal-subtitle">
+              {song.nomCancion || "Canción"} · {artistLabel}
+            </p>
+
+            <label className="modal-label" htmlFor="song-price">
+              Importe a pagar (€)
+            </label>
+            <input
+              id="song-price"
+              type="number"
+              min="0"
+              step="0.01"
+              className="modal-input"
+              value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)}
+              placeholder="Usar precio por defecto"
+            />
+            <p className="modal-hint">
+              Puedes dejarlo en blanco para usar el precio actual
+              ({formatPrice(song.precio)}).
+            </p>
+
+            {purchaseError && <div className="modal-error">{purchaseError}</div>}
+            {purchaseOk && <div className="modal-success">{purchaseOk}</div>}
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={closePurchaseModal}
+                disabled={purchaseLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleConfirmPurchase}
+                disabled={purchaseLoading}
+              >
+                {purchaseLoading ? "Procesando…" : "Pagar y comprar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

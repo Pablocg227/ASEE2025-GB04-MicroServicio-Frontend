@@ -33,6 +33,25 @@ export const getArtistEmailFromToken = () => {
   }
 };
 
+// Email de sesión (sirve para oyente o artista) leyendo userData o el JWT
+export const getStoredUserEmail = () => {
+  try {
+    const userData = localStorage.getItem("userData");
+    if (userData) {
+      const parsed = JSON.parse(userData);
+      if (parsed?.email) return parsed.email;
+      if (parsed?.user_data?.email) return parsed.user_data.email;
+    }
+  } catch (err) {
+    console.warn("No se pudo parsear userData de localStorage", err);
+  }
+
+  const fromToken = getArtistEmailFromToken();
+  if (fromToken) return fromToken;
+
+  return null;
+};
+
 // Obtener álbumes del artista
 export const fetchArtistAlbums = async (artistEmail) => {
   try {
@@ -187,6 +206,39 @@ export const fetchAlbumTracks = async (albumId) => {
 // Registrar reproducción de una canción (incrementa numVisualizaciones)
 export const registerSongPlay = async (songId) => {
   const response = await api.post(`/canciones/${songId}/play`);
+  return response.data;
+};
+
+// Comprar una canción (requiere token de msUsuarios)
+export const purchaseSong = async ({ songId, pricePaid, userEmail }) => {
+  const user_ref = userEmail || getStoredUserEmail();
+  if (!user_ref) {
+    const err = new Error("No se pudo determinar el email del usuario.");
+    err.code = "missing_user_email";
+    throw err;
+  }
+
+  const response = await api.post("/compras", {
+    song_id: songId,
+    user_ref,
+    price_paid: pricePaid,
+  });
+  return response.data;
+};
+
+// Comprar un álbum completo (pay-what-you-want con mínimo = precio del álbum)
+export const purchaseAlbum = async ({ albumId, pricePaid, userEmail }) => {
+  const user_ref = userEmail || getStoredUserEmail();
+  if (!user_ref) {
+    const err = new Error("No se pudo determinar el email del usuario.");
+    err.code = "missing_user_email";
+    throw err;
+  }
+
+  const response = await api.post(`/albumes/${albumId}/compras`, {
+    user_ref,
+    price_paid: pricePaid,
+  });
   return response.data;
 };
 
