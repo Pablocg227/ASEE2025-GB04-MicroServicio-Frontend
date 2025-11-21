@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import EditModal from "./EditModal";
 import ManageSongsModal from "./ManageSongsModal";
-import { deleteAlbum } from "../services/api";
-import { fileURL } from "../utils/helpers";
+import { deleteAlbum } from "../../services/musicApi";
+import { fileURL } from "../../utils/helpers";
 
 const AlbumList = ({ albums, onUpdate }) => {
   const [editingAlbum, setEditingAlbum] = useState(null);
