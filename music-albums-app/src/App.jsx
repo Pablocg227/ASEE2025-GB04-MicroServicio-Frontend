@@ -11,6 +11,8 @@ import PublicCatalog from "./components/PublicCatalog";
 import PublicSongDetail from "./components/PublicSongDetail";
 import PublicAlbumCatalog from "./components/PublicAlbumCatalog";
 import PublicAlbumDetail from "./components/PublicAlbumDetail";
+import PlaylistsPage from "./components/PlaylistsPage";
+import PlaylistDetailPage from "./components/PlaylistDetailPage";
 
 import "./styles/App.css";
 
@@ -20,10 +22,12 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [artistEmail, setArtistEmail] = useState(null);
   const [activeTab, setActiveTab] = useState("albums"); // 'albums' o 'songs'
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
 
   // modos de vista:
   // - 'catalog' / 'song'  -> catálogo público de canciones y detalle de canción
   // - 'albums' / 'album'  -> catálogo público de álbumes y detalle de álbum
+  // - 'playlists' / 'playlist'-> listas de reproducción del oyente
   // - 'artist'            -> panel de artista
   const [viewMode, setViewMode] = useState("catalog");
   const [selectedSongId, setSelectedSongId] = useState(null);
@@ -123,12 +127,18 @@ function App() {
     setViewMode("albums");
   };
 
+  const handleOpenSongFromAlbum = (songId) => {
+    setSelectedSongId(songId);
+    setViewMode("song");
+  };
+
   if (loading) {
     return <div className="loading">Cargando...</div>;
   }
 
   const isSongView = viewMode === "catalog" || viewMode === "song";
   const isAlbumView = viewMode === "albums" || viewMode === "album";
+  const isPlaylistsView = viewMode === "playlists" || viewMode === "playlist";
 
   return (
     <div className="App">
@@ -147,6 +157,7 @@ function App() {
                     setViewMode("catalog");
                     setSelectedSongId(null);
                     setSelectedAlbumId(null);
+                    setSelectedPlaylistId(null);
                   }}
                 >
                   Explorar canciones
@@ -158,10 +169,27 @@ function App() {
                     setViewMode("albums");
                     setSelectedAlbumId(null);
                     setSelectedSongId(null);
+                    setSelectedPlaylistId(null);
                   }}
                 >
                   Explorar álbumes
                 </button>
+
+                {/* Solo tiene sentido "Mis playlists" si el oyente ha iniciado sesión */}
+                {isListenerLoggedIn && (
+                  <button
+                    type="button"
+                    className={`btn-mode ${isPlaylistsView ? "active" : ""}`}
+                    onClick={() => {
+                      setViewMode("playlists");
+                      setSelectedSongId(null);
+                      setSelectedAlbumId(null);
+                      setSelectedPlaylistId(null);
+                    }}
+                  >
+                    Mis playlists
+                  </button>
+                )}
               </div>
 
               <div className="header-auth">
@@ -221,8 +249,31 @@ function App() {
         <PublicAlbumDetail
           albumId={selectedAlbumId}
           onBack={handleBackToAlbumCatalog}
+          onOpenSong={handleOpenSongFromAlbum}
         />
       )}
+
+      {!artistEmail && viewMode === "playlists" && (
+        <PlaylistsPage
+          onOpenPlaylist={(id) => {
+            setSelectedPlaylistId(id);
+            setViewMode("playlist");
+          }}
+        />
+      )}
+
+      {!artistEmail &&
+        viewMode === "playlist" &&
+        selectedPlaylistId != null && (
+          <PlaylistDetailPage
+            playlistId={selectedPlaylistId}
+            onBack={() => {
+              setViewMode("playlists");
+              setSelectedPlaylistId(null);
+            }}
+            onOpenSong={handleSelectSong}
+          />
+        )}
 
       {/* PANEL DE ARTISTA */}
       {artistEmail && viewMode === "artist" && (

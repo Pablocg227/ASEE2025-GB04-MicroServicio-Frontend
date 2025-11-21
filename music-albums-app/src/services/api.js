@@ -292,3 +292,49 @@ export const fetchArtistsByEmails = async (emails) => {
 
   return result;
 };
+
+// --- PLAYLISTS ---
+
+export const fetchPlaylists = async () => {
+  const response = await api.get("/playlists");
+  return response.data; // array de PlaylistOut
+};
+
+export const fetchPlaylistById = async (id) => {
+  const response = await api.get(`/playlists/${id}`);
+  return response.data; // PlaylistOut
+};
+
+export const createPlaylist = async ({ name, description, songIds = [] }) => {
+  const payload = {
+    name,
+    description,
+    song_ids: songIds,
+  };
+  const response = await api.post("/playlists", payload);
+  return response.data;
+};
+
+export const updatePlaylist = async (id, { name, description }) => {
+  const payload = {};
+  if (name !== undefined) payload.name = name;
+  if (description !== undefined) payload.description = description;
+  const response = await api.patch(`/playlists/${id}`, payload);
+  return response.data;
+};
+
+export const deletePlaylist = async (id) => {
+  await api.delete(`/playlists/${id}`);
+};
+
+export const addSongToPlaylist = async (playlistId, songId) => {
+  const response = await api.post(`/playlists/${playlistId}/songs`, {
+    song_id: songId,
+  });
+  return response.data;
+};
+
+export const removeSongFromPlaylist = async (playlistId, songId) => {
+  const response = await api.delete(`/playlists/${playlistId}/songs/${songId}`);
+  return response.data;
+};
