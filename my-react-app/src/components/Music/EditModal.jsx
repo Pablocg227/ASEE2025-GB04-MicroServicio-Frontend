@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 
-import { updateAlbum, updateSong } from "../services/api";
-import { fileURL } from "../utils/helpers";
-import "../styles/EditModal.css";
+import { updateAlbum, updateSong } from "../../services/musicApi";
+import { fileURL } from "../../utils/helpers";
+import "../../styles/EditModal.css";
 
 const EditModal = ({ type, data, onClose, onSave }) => {
   const initialTitle =

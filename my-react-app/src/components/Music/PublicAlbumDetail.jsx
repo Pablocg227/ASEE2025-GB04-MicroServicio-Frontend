@@ -5,10 +5,10 @@ import {
   fetchAlbumTracks,
   fetchArtistsByEmails,
   registerSongPlay,
-} from "../services/api";
+} from "../../services/musicApi";
 
-import { fileURL, formatDate } from "../utils/helpers";
-import "../styles/App.css";
+import { fileURL, formatDate } from "../../utils/helpers";
+import "../../styles/MusicGlobal.css";
 
 const PublicAlbumDetail = ({ albumId, onBack }) => {
   const [album, setAlbum] = useState(null);

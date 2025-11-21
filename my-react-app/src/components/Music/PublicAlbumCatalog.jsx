@@ -1,9 +1,9 @@
 // src/components/PublicAlbumCatalog.jsx
 import React, { useEffect, useState } from "react";
-import { fetchPublicAlbums, fetchArtistsByEmails } from "../services/api";
+import { fetchPublicAlbums, fetchArtistsByEmails } from "../../services/musicApi";
 
-import { fileURL, formatDate, truncateString } from "../utils/helpers";
-import "../styles/App.css";
+import { fileURL, formatDate, truncateString } from "../../utils/helpers";
+import "../../styles/MusicGlobal.css";
 
 const PublicAlbumCatalog = ({ onSelectAlbum }) => {
   const [albums, setAlbums] = useState([]);

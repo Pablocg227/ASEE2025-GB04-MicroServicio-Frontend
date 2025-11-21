@@ -1,40 +1,50 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
+// NOTA: Hemos ajustado la ruta para salir de 'Music', salir de 'components' e ir a 'services'
 import {
   fetchArtistAlbums,
   fetchArtistSongs,
   getArtistEmailFromToken,
-} from "./services/api";
-import AlbumList from "./components/AlbumList";
-import SongList from "./components/SongList";
+} from "../../services/musicApi";
 
-import PublicCatalog from "./components/PublicCatalog";
-import PublicSongDetail from "./components/PublicSongDetail";
-import PublicAlbumCatalog from "./components/PublicAlbumCatalog";
-import PublicAlbumDetail from "./components/PublicAlbumDetail";
+// NOTA: Como MusicPage está en la misma carpeta que estos componentes, el import es directo "./"
+import AlbumList from "./AlbumList";
+import SongList from "./SongList";
+import PublicCatalog from "./PublicCatalog";
+import PublicSongDetail from "./PublicSongDetail";
+import PublicAlbumCatalog from "./PublicAlbumCatalog";
+import PublicAlbumDetail from "./PublicAlbumDetail";
 
-import "./styles/App.css";
+// NOTA: Ajustamos la ruta de los estilos (subir 2 niveles)
+import "../../styles/MusicGlobal.css";
 
-function App() {
+function MusicPage() {
   const [albums, setAlbums] = useState([]);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [artistEmail, setArtistEmail] = useState(null);
-  const [activeTab, setActiveTab] = useState("albums"); // 'albums' o 'songs'
+  const [activeTab, setActiveTab] = useState("albums");
 
-  // modos de vista:
-  // - 'catalog' / 'song'  -> catálogo público de canciones y detalle de canción
-  // - 'albums' / 'album'  -> catálogo público de álbumes y detalle de álbum
-  // - 'artist'            -> panel de artista
   const [viewMode, setViewMode] = useState("catalog");
   const [selectedSongId, setSelectedSongId] = useState(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
   const [isListenerLoggedIn, setIsListenerLoggedIn] = useState(false);
 
+  // --- NUEVO: Estado para guardar el email del usuario actual (sea artista o oyente) ---
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
+  const navigate = useNavigate();
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUserType = localStorage.getItem("userType");
 
-    // Si hay token y es un artista, mostramos directamente el panel de artista
+    if (token) {
+      const emailFromToken = getArtistEmailFromToken(); // Esta función ya la tienes importada
+      if (emailFromToken) {
+        setCurrentUserEmail(emailFromToken);
+      }
+    }
+
     if (token && storedUserType === "artist") {
       const email = getArtistEmailFromToken();
       if (email) {
@@ -45,7 +55,6 @@ function App() {
       }
     }
 
-    // Para oyentes (user) o usuarios anónimos, la vista por defecto es el catálogo público
     if (token && storedUserType === "user") {
       setIsListenerLoggedIn(true);
     } else {
@@ -80,7 +89,6 @@ function App() {
   };
 
   const handleLogout = () => {
-    // Limpiar cualquier información de autenticación que pueda existir
     localStorage.removeItem("authToken");
     localStorage.removeItem("tokenType");
     localStorage.removeItem("userType");
@@ -98,11 +106,11 @@ function App() {
   };
 
   const handleLoginClick = () => {
-    // Redirige a la página clásica de login del microservicio de usuarios
+    // OJO: Esto asume que tienes un login.html en la carpeta 'public'.
+    // Si vas a unificar el login más adelante, esto habrá que cambiarlo.
     window.location.href = "/login.html";
   };
 
-  // Eventos de oyente
   const handleSelectSong = (songId) => {
     setSelectedSongId(songId);
     setViewMode("song");
@@ -133,10 +141,8 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        {/* si quieres el título viejo de develop, cambia este texto */}
-        <h1>Resound</h1>
+        <h1>Resound Música</h1>
         <div className="header-info">
-          {/* Vista de oyente: botones de exploración + login/logout */}
           {!artistEmail && (
             <>
               <div className="header-modes">
@@ -166,19 +172,23 @@ function App() {
 
               <div className="header-auth">
                 {isListenerLoggedIn ? (
-                  <button
-                    type="button"
-                    className="btn-auth"
-                    onClick={handleLogout}
-                  >
-                    Cerrar sesión
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {/* --- NUEVO: ICONO DE PERFIL --- */}
+                    <div 
+                      title="Ir a mi perfil"
+                      onClick={() => navigate(`/perfil/${currentUserEmail}`)}
+                      style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+                    >
+                      👤
+                    </div>
+                    {/* ----------------------------- */}
+                    
+                    <button type="button" className="btn-auth" onClick={handleLogout}>
+                      Cerrar sesión
+                    </button>
+                  </div>
                 ) : (
-                  <button
-                    type="button"
-                    className="btn-auth"
-                    onClick={handleLoginClick}
-                  >
+                  <button type="button" className="btn-auth" onClick={handleLoginClick}>
                     Iniciar sesión
                   </button>
                 )}
@@ -187,13 +197,19 @@ function App() {
           )}
 
           {artistEmail && (
-            <div className="header-artist">
+            <div className="header-artist" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {/* --- NUEVO: ICONO DE PERFIL --- */}
+              <div 
+                  title="Ir a mi perfil"
+                  onClick={() => navigate(`/perfil/${currentUserEmail}`)}
+                  style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+                >
+                  👤
+              </div>
+              {/* ----------------------------- */}
+
               <span>Artista: {artistEmail}</span>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="btn-logout"
-              >
+              <button type="button" onClick={handleLogout} className="btn-logout">
                 Cerrar sesión
               </button>
             </div>
@@ -261,4 +277,4 @@ function App() {
   );
 }
 
-export default App;
+export default MusicPage;
