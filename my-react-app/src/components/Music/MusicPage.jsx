@@ -14,6 +14,8 @@ import PublicCatalog from "./PublicCatalog";
 import PublicSongDetail from "./PublicSongDetail";
 import PublicAlbumCatalog from "./PublicAlbumCatalog";
 import PublicAlbumDetail from "./PublicAlbumDetail";
+import PlaylistsPage from "./PlaylistsPage";
+import PlaylistDetailPage from "./PlaylistDetailPage";
 
 // NOTA: Ajustamos la ruta de los estilos (subir 2 niveles)
 import "../../styles/MusicGlobal.css";
@@ -23,8 +25,14 @@ function MusicPage() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [artistEmail, setArtistEmail] = useState(null);
-  const [activeTab, setActiveTab] = useState("albums");
+  const [activeTab, setActiveTab] = useState("albums"); // 'albums' o 'songs'
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
 
+  // modos de vista:
+  // - 'catalog' / 'song'  -> catálogo público de canciones y detalle de canción
+  // - 'albums' / 'album'  -> catálogo público de álbumes y detalle de álbum
+  // - 'playlists' / 'playlist'-> listas de reproducción del oyente
+  // - 'artist'            -> panel de artista
   const [viewMode, setViewMode] = useState("catalog");
   const [selectedSongId, setSelectedSongId] = useState(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
@@ -131,12 +139,18 @@ function MusicPage() {
     setViewMode("albums");
   };
 
+  const handleOpenSongFromAlbum = (songId) => {
+    setSelectedSongId(songId);
+    setViewMode("song");
+  };
+
   if (loading) {
     return <div className="loading">Cargando...</div>;
   }
 
   const isSongView = viewMode === "catalog" || viewMode === "song";
   const isAlbumView = viewMode === "albums" || viewMode === "album";
+  const isPlaylistsView = viewMode === "playlists" || viewMode === "playlist";
 
   return (
     <div className="App">
@@ -153,6 +167,7 @@ function MusicPage() {
                     setViewMode("catalog");
                     setSelectedSongId(null);
                     setSelectedAlbumId(null);
+                    setSelectedPlaylistId(null);
                   }}
                 >
                   Explorar canciones
@@ -164,10 +179,27 @@ function MusicPage() {
                     setViewMode("albums");
                     setSelectedAlbumId(null);
                     setSelectedSongId(null);
+                    setSelectedPlaylistId(null);
                   }}
                 >
                   Explorar álbumes
                 </button>
+
+                {/* Solo tiene sentido "Mis playlists" si el oyente ha iniciado sesión */}
+                {isListenerLoggedIn && (
+                  <button
+                    type="button"
+                    className={`btn-mode ${isPlaylistsView ? "active" : ""}`}
+                    onClick={() => {
+                      setViewMode("playlists");
+                      setSelectedSongId(null);
+                      setSelectedAlbumId(null);
+                      setSelectedPlaylistId(null);
+                    }}
+                  >
+                    Mis playlists
+                  </button>
+                )}
               </div>
 
               <div className="header-auth">
@@ -237,8 +269,31 @@ function MusicPage() {
         <PublicAlbumDetail
           albumId={selectedAlbumId}
           onBack={handleBackToAlbumCatalog}
+          onOpenSong={handleOpenSongFromAlbum}
         />
       )}
+
+      {!artistEmail && viewMode === "playlists" && (
+        <PlaylistsPage
+          onOpenPlaylist={(id) => {
+            setSelectedPlaylistId(id);
+            setViewMode("playlist");
+          }}
+        />
+      )}
+
+      {!artistEmail &&
+        viewMode === "playlist" &&
+        selectedPlaylistId != null && (
+          <PlaylistDetailPage
+            playlistId={selectedPlaylistId}
+            onBack={() => {
+              setViewMode("playlists");
+              setSelectedPlaylistId(null);
+            }}
+            onOpenSong={handleSelectSong}
+          />
+        )}
 
       {/* PANEL DE ARTISTA */}
       {artistEmail && viewMode === "artist" && (

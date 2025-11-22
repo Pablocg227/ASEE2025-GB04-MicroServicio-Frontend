@@ -7,6 +7,7 @@ import {
   purchaseSong,
   getStoredUserEmail
 } from "../../services/musicApi";
+import AddToPlaylistModal from "./AddToPlaylistModal";
 
 import { fileURL } from "../../utils/helpers";
 
@@ -57,6 +58,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseError, setPurchaseError] = useState("");
   const [purchaseOk, setPurchaseOk] = useState("");
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
 
   useEffect(() => {
     const loadSong = async () => {
@@ -303,12 +305,26 @@ const PublicSongDetail = ({ songId, onBack }) => {
           </div>
 
           <div className="song-purchase">
-            <button type="button" className="btn-primary" onClick={openPurchaseModal}>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={openPurchaseModal}
+            >
               Comprar pista digital {formatPrice(song.precio)}
             </button>
             <p className="purchase-note">
               Recibirás la pista y las futuras descargas ligadas a tu cuenta.
             </p>
+          </div>
+
+          <div className="song-playlist-actions" style={{ marginTop: "12px" }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setShowAddToPlaylist(true)}
+            >
+              Añadir a playlist
+            </button>
           </div>
         </div>
       </div>
@@ -335,11 +351,13 @@ const PublicSongDetail = ({ songId, onBack }) => {
               placeholder="Usar precio por defecto"
             />
             <p className="modal-hint">
-              Puedes dejarlo en blanco para usar el precio actual
-              ({formatPrice(song.precio)}).
+              Puedes dejarlo en blanco para usar el precio actual (
+              {formatPrice(song.precio)}).
             </p>
 
-            {purchaseError && <div className="modal-error">{purchaseError}</div>}
+            {purchaseError && (
+              <div className="modal-error">{purchaseError}</div>
+            )}
             {purchaseOk && <div className="modal-success">{purchaseOk}</div>}
 
             <div className="modal-actions">
@@ -362,6 +380,14 @@ const PublicSongDetail = ({ songId, onBack }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ⬇ Modal "Añadir a playlist" */}
+      {showAddToPlaylist && song && (
+        <AddToPlaylistModal
+          song={song}
+          onClose={() => setShowAddToPlaylist(false)}
+        />
       )}
     </div>
   );

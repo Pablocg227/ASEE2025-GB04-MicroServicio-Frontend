@@ -12,7 +12,7 @@ import {
 import { fileURL, formatDate } from "../../utils/helpers";
 import "../../styles/MusicGlobal.css";
 
-const PublicAlbumDetail = ({ albumId, onBack }) => {
+const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
   const [album, setAlbum] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -294,13 +294,18 @@ const PublicAlbumDetail = ({ albumId, onBack }) => {
                     <li
                       key={song.id}
                       className={`track-item ${isActive ? "active" : ""}`}
-                      onClick={() => setCurrentTrackIndex(index)}
+                      onClick={() => {
+                        setCurrentTrackIndex(index);
+                        if (onOpenSong) {
+                          onOpenSong(song.id);
+                        }
+                      }}
                     >
                       <button
                         type="button"
                         className="track-play-btn"
                         onClick={(e) => {
-                          e.stopPropagation();
+                          e.stopPropagation(); // para que no navegue al detalle
                           setCurrentTrackIndex(index);
                           handlePlayClick(song);
                         }}
