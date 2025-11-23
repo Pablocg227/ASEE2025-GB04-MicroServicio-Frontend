@@ -1,11 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import useUser from '../hooks/useUser';
 import { 
   fetchUserPurchases, 
   fetchSongById, 
   fetchUserAlbumPurchases, 
-  fetchAlbumById 
+  fetchAlbumById,
+  fetchUserByEmail,
+  fetchArtistByEmail
 } from '../services/api';
 import '../styles/ProfilePage.css';
 
@@ -15,8 +16,13 @@ const FILES_BASE_URL = 'http://127.0.0.1:8080';
 export default function ProfilePage() {
   const { email } = useParams();
   const navigate = useNavigate();
-  const { user, loading, error } = useUser(email);
   
+  const [user, setUser] = useState(null);
+  // Estado para recordar si es 'user' o 'artist'
+  const [userType, setUserType] = useState(null); 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [purchasedSongs, setPurchasedSongs] = useState([]);
   const [purchasedAlbums, setPurchasedAlbums] = useState([]);
@@ -32,7 +38,43 @@ export default function ProfilePage() {
   const [previewAvatar, setPreviewAvatar] = useState(null);
   const avatarInputRef = useRef(null);
 
-  // 1. Verificar propiedad
+  // 1. Cargar datos del Perfil (Usuario o Artista)
+  useEffect(() => {
+    const loadProfileData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // INTENTO 1: Buscar como Usuario Oyente
+        const userData = await fetchUserByEmail(email);
+        setUser(userData);
+        setUserType('user'); // Es un usuario
+      } catch (userErr) {
+        // Si falla (404), INTENTO 2: Buscar como Artista
+        console.log("No es usuario, probando como artista...");
+        try {
+          const artistData = await fetchArtistByEmail(email);
+          if (artistData) {
+            setUser(artistData);
+            setUserType('artist'); // Es un artista
+          } else {
+            setError(new Error("Perfil no encontrado"));
+          }
+        } catch (artistErr) {
+          console.error("Tampoco es artista:", artistErr);
+          setError(artistErr);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (email) {
+      loadProfileData();
+    }
+  }, [email]);
+
+  // 2. Verificar propiedad
   useEffect(() => {
     const checkOwnership = async () => {
       const token = localStorage.getItem('authToken');
@@ -59,26 +101,27 @@ export default function ProfilePage() {
     checkOwnership();
   }, [email]);
 
-  // 2. Cargar Compras
+  // 3. Cargar Compras
   useEffect(() => {
     if (email) {
       setPurchasesLoading(true);
       const loadAllPurchases = async () => {
         try {
-          // Cargar Canciones
           const songPurchaseIds = await fetchUserPurchases(email);
           const songsPromises = songPurchaseIds.map(p => fetchSongById(p.idCancion || p));
           const songs = await Promise.all(songsPromises);
           setPurchasedSongs(songs);
 
-          // Cargar Álbumes
           const albumPurchasesData = await fetchUserAlbumPurchases(email);
           const albumsPromises = albumPurchasesData.map(p => fetchAlbumById(p.idAlbum || p));
           const albums = await Promise.all(albumsPromises);
           setPurchasedAlbums(albums);
 
         } catch (err) {
-          console.error(err);
+          // Es normal que falle si es un artista puro sin compras
+          console.log("Información: No se encontraron compras para este perfil.");
+          setPurchasedSongs([]);
+          setPurchasedAlbums([]);
         } finally {
           setPurchasesLoading(false);
         }
@@ -87,13 +130,15 @@ export default function ProfilePage() {
     }
   }, [email]);
 
-  // Handlers del Modal
+  // Handlers
   const handleOpenEdit = () => {
-    setEditForm({
-      display_name: user.display_name || '',
-      password: '',
-      avatar: null
-    });
+    if (user) {
+      setEditForm({
+        display_name: user.display_name || user.nombre_artistico || '',
+        password: '',
+        avatar: null
+      });
+    }
     setPreviewAvatar(null);
     setShowEditModal(true);
   };
@@ -115,12 +160,17 @@ export default function ProfilePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
+    
     formData.append('display_name', editForm.display_name);
+    
     if (editForm.password) formData.append('password', editForm.password);
     if (editForm.avatar) formData.append('avatar', editForm.avatar);
 
+    // Usamos el estado 'userType' que guardamos al cargar el perfil para saber a qué endpoint llamar
+    const endpoint = userType === 'artist' ? 'artistas' : 'usuarios'; 
+
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${encodeURIComponent(email)}`, {
+      const response = await fetch(`${API_BASE_URL}/${endpoint}/${encodeURIComponent(email)}`, {
         method: 'PUT',
         body: formData
       });
@@ -134,23 +184,22 @@ export default function ProfilePage() {
   };
 
   if (loading) return <div className="loading">Cargando...</div>;
-  if (error) return <div className="error">{error.message}</div>;
+  if (error) return <div className="error">Perfil no encontrado</div>;
   if (!user) return <div className="error">Usuario no encontrado</div>;
 
-  const username = user.display_name || 'Usuario';
+  const username = user.display_name || user.nombre_artistico || 'Usuario';
   const backendAvatarUrl = user.avatar_url ? `${API_BASE_URL}${user.avatar_url}` : null;
 
   return (
     <div className="profile-page">
       
-      {/* HEADER */}
       <div className="profile-header-container">
-
-        {/* 0. BOTÓN VOLVER (Ahora vive aquí dentro) */}
         <button className="back-btn" onClick={() => navigate(-1)}>
           <span>←</span> Volver
         </button>
+        
         <div className="profile-banner"></div>
+        
         <div className="profile-header-content">
           <div className="avatar-box">
             {backendAvatarUrl ? (
@@ -162,6 +211,12 @@ export default function ProfilePage() {
 
           <div className="profile-info">
             <h1>{username}</h1>
+            
+            <div style={{ display: 'flex', gap: '15px', color: '#6b7280', fontSize: '0.9rem', marginBottom: '5px' }}>
+              <span>🎵 {purchasedSongs.length} Canciones</span>
+              <span>💿 {purchasedAlbums.length} Álbumes</span>
+            </div>
+
             <div className="profile-actions">
               {isOwner && (
                 <button className="btn-edit" onClick={handleOpenEdit}>Editar Perfil</button>
@@ -189,13 +244,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* GRID CONTENIDO */}
       <main className="purchases-grid">
         {purchasesLoading ? (
           <div className="loading">Cargando colección...</div>
         ) : (
           <>
-            {/* VISTA CANCIONES */}
             {activeTab === 'songs' && (
               purchasedSongs.length > 0 ? (
                 purchasedSongs.map(song => (
@@ -206,10 +259,12 @@ export default function ProfilePage() {
                         alt={song.nomCancion}
                         onError={(e) => e.target.src = 'https://via.placeholder.com/200'}
                       />
+                      <div className="play-overlay">
+                        <div className="play-icon">▶</div>
+                      </div>
                     </div>
                     <div className="card-details">
                       <h3>{song.nomCancion}</h3>
-                      {/* Aquí también corregimos por si acaso: artistas_emails */}
                       <p>{song.artistas_emails?.[0] || 'Artista desconocido'}</p>
                     </div>
                   </div>
@@ -219,7 +274,6 @@ export default function ProfilePage() {
               )
             )}
 
-            {/* VISTA ÁLBUMES */}
             {activeTab === 'albums' && (
               purchasedAlbums.length > 0 ? (
                 purchasedAlbums.map(album => (
@@ -230,10 +284,12 @@ export default function ProfilePage() {
                         alt={album.titulo}
                         onError={(e) => e.target.src = 'https://via.placeholder.com/200'}
                       />
+                      <div className="play-overlay">
+                        <div className="play-icon">▶</div>
+                      </div>
                     </div>
                     <div className="card-details">
                       <h3>{album.titulo}</h3>
-                      {/* AQUÍ ESTABA EL ERROR: era "artista_emails" y ahora es "artistas_emails" */}
                       <p>{album.artistas_emails?.[0] || 'Varios Artistas'}</p>
                       <span className="badge-album">Álbum</span>
                     </div>
@@ -247,7 +303,6 @@ export default function ProfilePage() {
         )}
       </main>
 
-      {/* MODAL EDITAR */}
       {showEditModal && (
         <div className="modal-overlay" onClick={handleCloseEdit}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

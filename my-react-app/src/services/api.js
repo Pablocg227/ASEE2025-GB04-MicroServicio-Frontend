@@ -41,6 +41,14 @@ export const fetchUserByEmail = async (email) => {
   return response.json();
 };
 
+export const fetchArtistByEmail = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/artistas/${encodeURIComponent(email)}`);
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
+  }
+  return response.json();
+};
+
 export const fetchUserPurchases = async (email) => {
   try {
     const response = await fetch(`${COMPRAS_API_URL}/compras?user_ref=${encodeURIComponent(email)}`);

@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Redirigir según tipo de usuario
         if (result.user_type === 'artist') {
-          window.location.href = 'FormularioSubidaCancion.html';
+          window.location.href = '/musica';
         } else if (result.user_data.is_admin) {
           window.location.href = 'admin-dashboard.html';
         } else {
