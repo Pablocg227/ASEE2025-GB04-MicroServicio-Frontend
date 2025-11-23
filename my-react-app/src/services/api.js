@@ -75,10 +75,8 @@ export const fetchSongById = async (songId) => {
   }
 };
 
-// 1. Obtener lista de compras de álbumes
 export const fetchUserAlbumPurchases = async (email) => {
   try {
-    // Nota: Asumo que COMPRAS_API_URL es 'http://127.0.0.1:8080/api' basado en tu código anterior
     const response = await fetch(`${COMPRAS_API_URL}/compras/albumes?user_ref=${encodeURIComponent(email)}`);
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -90,7 +88,6 @@ export const fetchUserAlbumPurchases = async (email) => {
   }
 };
 
-// 2. Obtener detalle de un álbum por ID
 export const fetchAlbumById = async (albumId) => {
   try {
     const response = await fetch(`${COMPRAS_API_URL}/albumes/${albumId}`);
@@ -102,4 +99,26 @@ export const fetchAlbumById = async (albumId) => {
     console.error('Error fetching album details:', error);
     throw error;
   }
+};
+
+// --- NUEVAS FUNCIONES PARA ELIMINAR ---
+
+export const deleteUser = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/usuarios/${encodeURIComponent(email)}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
+  }
+  return response.json();
+};
+
+export const deleteArtist = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/artistas/${encodeURIComponent(email)}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
+  }
+  return response.json();
 };
