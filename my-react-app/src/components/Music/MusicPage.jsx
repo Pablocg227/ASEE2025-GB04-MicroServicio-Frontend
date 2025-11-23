@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-// NOTA: Hemos ajustado la ruta para salir de 'Music', salir de 'components' e ir a 'services'
 import {
   fetchArtistAlbums,
   fetchArtistSongs,
   getArtistEmailFromToken,
 } from "../../services/musicApi";
 
-// NOTA: Como MusicPage está en la misma carpeta que estos componentes, el import es directo "./"
 import AlbumList from "./AlbumList";
 import SongList from "./SongList";
 import PublicCatalog from "./PublicCatalog";
@@ -17,29 +15,35 @@ import PublicAlbumDetail from "./PublicAlbumDetail";
 import PlaylistsPage from "./PlaylistsPage";
 import PlaylistDetailPage from "./PlaylistDetailPage";
 
-// NOTA: Ajustamos la ruta de los estilos (subir 2 niveles)
 import "../../styles/MusicGlobal.css";
 
 function MusicPage() {
   const [albums, setAlbums] = useState([]);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Datos de sesión
   const [artistEmail, setArtistEmail] = useState(null);
-  const [activeTab, setActiveTab] = useState("albums"); // 'albums' o 'songs'
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
+  const [isListenerLoggedIn, setIsListenerLoggedIn] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
-  // modos de vista:
-  // - 'catalog' / 'song'  -> catálogo público de canciones y detalle de canción
-  // - 'albums' / 'album'  -> catálogo público de álbumes y detalle de álbum
-  // - 'playlists' / 'playlist'-> listas de reproducción del oyente
-  // - 'artist'            -> panel de artista
+  // Navegación interna
+  const [activeTab, setActiveTab] = useState("albums"); // Para el panel de artista ('albums' o 'songs')
+  
+  // Modos de vista principales:
+  // - 'catalog': Explorar canciones (público)
+  // - 'song': Detalle canción
+  // - 'albums': Explorar álbumes (público)
+  // - 'album': Detalle álbum
+  // - 'playlists': Mis playlists
+  // - 'playlist': Detalle playlist
+  // - 'artist_panel': GESTIÓN DE ARTISTA (Modificar música)
   const [viewMode, setViewMode] = useState("catalog");
+  
   const [selectedSongId, setSelectedSongId] = useState(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
-  const [isListenerLoggedIn, setIsListenerLoggedIn] = useState(false);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
 
-  // --- NUEVO: Estado para guardar el email del usuario actual (sea artista o oyente) ---
-  const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,7 +51,7 @@ function MusicPage() {
     const storedUserType = localStorage.getItem("userType");
 
     if (token) {
-      const emailFromToken = getArtistEmailFromToken(); // Esta función ya la tienes importada
+      const emailFromToken = getArtistEmailFromToken();
       if (emailFromToken) {
         setCurrentUserEmail(emailFromToken);
       }
@@ -57,25 +61,28 @@ function MusicPage() {
       const email = getArtistEmailFromToken();
       if (email) {
         setArtistEmail(email);
-        setViewMode("artist");
-        loadData(email);
-        return;
+        // CAMBIO: Al iniciar, cargamos datos pero NO forzamos la vista 'artist_panel'
+        // Dejamos que por defecto se quede en 'catalog' para que vea la vista pública primero.
+        loadData(email); 
       }
     }
 
     if (token && storedUserType === "user") {
       setIsListenerLoggedIn(true);
     } else {
+      // Si es artista, también podría considerarse "logueado" para ver playlists si tu backend lo permite,
+      // pero mantendremos la lógica actual.
       setIsListenerLoggedIn(false);
     }
 
+    // Por defecto iniciamos en el catálogo
     setViewMode("catalog");
     setLoading(false);
   }, []);
 
   const loadData = async (email) => {
     try {
-      setLoading(true);
+      // Cargamos datos de gestión en segundo plano
       const [albumsData, songsData] = await Promise.all([
         fetchArtistAlbums(email),
         fetchArtistSongs(email),
@@ -84,9 +91,7 @@ function MusicPage() {
       setSongs(songsData);
     } catch (error) {
       console.error("Error loading data:", error);
-      alert("Error al cargar los datos del artista");
-    } finally {
-      setLoading(false);
+      // No alertamos intrusivamente al cargar la página
     }
   };
 
@@ -110,15 +115,14 @@ function MusicPage() {
     setViewMode("catalog");
     setSelectedSongId(null);
     setSelectedAlbumId(null);
-    setLoading(false);
+    setCurrentUserEmail(null);
   };
 
   const handleLoginClick = () => {
-    // OJO: Esto asume que tienes un login.html en la carpeta 'public'.
-    // Si vas a unificar el login más adelante, esto habrá que cambiarlo.
     window.location.href = "/login.html";
   };
 
+  // --- Handlers de navegación pública ---
   const handleSelectSong = (songId) => {
     setSelectedSongId(songId);
     setViewMode("song");
@@ -148,124 +152,116 @@ function MusicPage() {
     return <div className="loading">Cargando...</div>;
   }
 
+  // Helpers para saber qué botón activar en el menú
   const isSongView = viewMode === "catalog" || viewMode === "song";
   const isAlbumView = viewMode === "albums" || viewMode === "album";
   const isPlaylistsView = viewMode === "playlists" || viewMode === "playlist";
+  const isArtistPanelView = viewMode === "artist_panel";
 
   return (
     <div className="App">
       <header className="app-header">
         <h1>Resound Música</h1>
+        
         <div className="header-info">
-          {!artistEmail && (
-            <>
-              <div className="header-modes">
-                <button
-                  type="button"
-                  className={`btn-mode ${isSongView ? "active" : ""}`}
-                  onClick={() => {
-                    setViewMode("catalog");
-                    setSelectedSongId(null);
-                    setSelectedAlbumId(null);
-                    setSelectedPlaylistId(null);
-                  }}
-                >
-                  Explorar canciones
-                </button>
-                <button
-                  type="button"
-                  className={`btn-mode ${isAlbumView ? "active" : ""}`}
-                  onClick={() => {
-                    setViewMode("albums");
-                    setSelectedAlbumId(null);
-                    setSelectedSongId(null);
-                    setSelectedPlaylistId(null);
-                  }}
-                >
-                  Explorar álbumes
-                </button>
+          
+          {/* BARRA DE NAVEGACIÓN (Visible para todos: Artistas y Oyentes) */}
+          <div className="header-modes">
+            <button
+              type="button"
+              className={`btn-mode ${isSongView ? "active" : ""}`}
+              onClick={() => {
+                setViewMode("catalog");
+                setSelectedSongId(null);
+              }}
+            >
+              Explorar canciones
+            </button>
+            <button
+              type="button"
+              className={`btn-mode ${isAlbumView ? "active" : ""}`}
+              onClick={() => {
+                setViewMode("albums");
+                setSelectedAlbumId(null);
+              }}
+            >
+              Explorar álbumes
+            </button>
 
-                {/* Solo tiene sentido "Mis playlists" si el oyente ha iniciado sesión */}
-                {isListenerLoggedIn && (
-                  <button
-                    type="button"
-                    className={`btn-mode ${isPlaylistsView ? "active" : ""}`}
-                    onClick={() => {
-                      setViewMode("playlists");
-                      setSelectedSongId(null);
-                      setSelectedAlbumId(null);
-                      setSelectedPlaylistId(null);
-                    }}
-                  >
-                    Mis playlists
-                  </button>
-                )}
-              </div>
+            {/* "Mis playlists" visible si está logueado (como oyente O artista, si queremos) */}
+            {(isListenerLoggedIn || artistEmail) && (
+              <button
+                type="button"
+                className={`btn-mode ${isPlaylistsView ? "active" : ""}`}
+                onClick={() => {
+                  setViewMode("playlists");
+                  setSelectedPlaylistId(null);
+                }}
+              >
+                Mis playlists
+              </button>
+            )}
 
-              <div className="header-auth">
-                {isListenerLoggedIn ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    {/* --- NUEVO: ICONO DE PERFIL --- */}
-                    <div 
-                      title="Ir a mi perfil"
-                      onClick={() => navigate(`/perfil/${currentUserEmail}`)}
-                      style={{ cursor: 'pointer', fontSize: '1.5rem' }}
-                    >
-                      👤
-                    </div>
-                    {/* ----------------------------- */}
-                    
-                    <button type="button" className="btn-auth" onClick={handleLogout}>
-                      Cerrar sesión
-                    </button>
-                  </div>
-                ) : (
-                  <button type="button" className="btn-auth" onClick={handleLoginClick}>
-                    Iniciar sesión
-                  </button>
-                )}
-              </div>
-            </>
-          )}
+            {/* --- BOTÓN EXTRA SOLO PARA ARTISTAS --- */}
+            {artistEmail && (
+              <button
+                type="button"
+                className={`btn-mode ${isArtistPanelView ? "active" : ""}`}
+                style={{ marginLeft: '10px', backgroundColor: isArtistPanelView ? '#fff' : 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
+                onClick={() => setViewMode("artist_panel")}
+              >
+                ✏️ Gestionar Música
+              </button>
+            )}
+          </div>
 
-          {artistEmail && (
-            <div className="header-artist" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              {/* --- NUEVO: ICONO DE PERFIL --- */}
-              <div 
+          {/* ZONA DERECHA: PERFIL Y LOGOUT */}
+          <div className="header-auth">
+            {currentUserEmail ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div 
                   title="Ir a mi perfil"
                   onClick={() => navigate(`/perfil/${currentUserEmail}`)}
                   style={{ cursor: 'pointer', fontSize: '1.5rem' }}
                 >
                   👤
+                </div>
+                {artistEmail && <span style={{fontSize: '0.8rem', opacity: 0.8}}>Artista</span>}
+                <button type="button" className="btn-auth" onClick={handleLogout}>
+                  Cerrar sesión
+                </button>
               </div>
-              {/* ----------------------------- */}
-
-              <span>Artista: {artistEmail}</span>
-              <button type="button" onClick={handleLogout} className="btn-logout">
-                Cerrar sesión
+            ) : (
+              <button type="button" className="btn-auth" onClick={handleLoginClick}>
+                Iniciar sesión
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </header>
 
-      {/* VISTAS DE OYENTE */}
-      {!artistEmail && viewMode === "catalog" && (
+      {/* ------------------------------------------------------ */}
+      {/* RENDERIZADO DE VISTAS                     */}
+      {/* ------------------------------------------------------ */}
+
+      {/* 1. Catálogo de Canciones */}
+      {viewMode === "catalog" && (
         <PublicCatalog onSelectSong={handleSelectSong} />
       )}
 
-      {!artistEmail && viewMode === "song" && selectedSongId != null && (
+      {viewMode === "song" && selectedSongId != null && (
         <PublicSongDetail
           songId={selectedSongId}
           onBack={handleBackToSongCatalog}
         />
       )}
 
-      {!artistEmail && viewMode === "albums" && (
+      {/* 2. Catálogo de Álbumes */}
+      {viewMode === "albums" && (
         <PublicAlbumCatalog onSelectAlbum={handleSelectAlbum} />
       )}
 
-      {!artistEmail && viewMode === "album" && selectedAlbumId != null && (
+      {viewMode === "album" && selectedAlbumId != null && (
         <PublicAlbumDetail
           albumId={selectedAlbumId}
           onBack={handleBackToAlbumCatalog}
@@ -273,7 +269,8 @@ function MusicPage() {
         />
       )}
 
-      {!artistEmail && viewMode === "playlists" && (
+      {/* 3. Playlists */}
+      {viewMode === "playlists" && (
         <PlaylistsPage
           onOpenPlaylist={(id) => {
             setSelectedPlaylistId(id);
@@ -282,23 +279,21 @@ function MusicPage() {
         />
       )}
 
-      {!artistEmail &&
-        viewMode === "playlist" &&
-        selectedPlaylistId != null && (
-          <PlaylistDetailPage
-            playlistId={selectedPlaylistId}
-            onBack={() => {
-              setViewMode("playlists");
-              setSelectedPlaylistId(null);
-            }}
-            onOpenSong={handleSelectSong}
-          />
-        )}
+      {viewMode === "playlist" && selectedPlaylistId != null && (
+        <PlaylistDetailPage
+          playlistId={selectedPlaylistId}
+          onBack={() => {
+            setViewMode("playlists");
+            setSelectedPlaylistId(null);
+          }}
+          onOpenSong={handleSelectSong}
+        />
+      )}
 
-      {/* PANEL DE ARTISTA */}
-      {artistEmail && viewMode === "artist" && (
+      {/* 4. PANEL DE ARTISTA (Solo si artistEmail existe y está activo este modo) */}
+      {artistEmail && viewMode === "artist_panel" && (
         <>
-          <div className="tabs">
+          <div className="tabs" style={{ marginTop: '20px' }}>
             <button
               type="button"
               className={`tab ${activeTab === "albums" ? "active" : ""}`}
