@@ -168,12 +168,17 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(
           `✅ Canción subida correctamente.${data?.id ? "\nID: " + data.id : ""}`,
         );
+        
+        // Limpiar formulario (opcional ya que nos vamos a ir)
         form.reset();
         if (previewImg) {
           previewImg.src = "";
           previewImg.style.display = "none";
         }
         form.classList.remove("was-validated");
+
+        // --- NUEVA LÍNEA: REDIRECCIÓN ---
+        window.location.href = "/musica";
         return;
       }
 

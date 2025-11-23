@@ -28,16 +28,9 @@ function MusicPage() {
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
   // Navegación interna
-  const [activeTab, setActiveTab] = useState("albums"); // Para el panel de artista ('albums' o 'songs')
+  const [activeTab, setActiveTab] = useState("albums"); 
   
-  // Modos de vista principales:
-  // - 'catalog': Explorar canciones (público)
-  // - 'song': Detalle canción
-  // - 'albums': Explorar álbumes (público)
-  // - 'album': Detalle álbum
-  // - 'playlists': Mis playlists
-  // - 'playlist': Detalle playlist
-  // - 'artist_panel': GESTIÓN DE ARTISTA (Modificar música)
+  // Modos de vista
   const [viewMode, setViewMode] = useState("catalog");
   
   const [selectedSongId, setSelectedSongId] = useState(null);
@@ -61,8 +54,6 @@ function MusicPage() {
       const email = getArtistEmailFromToken();
       if (email) {
         setArtistEmail(email);
-        // CAMBIO: Al iniciar, cargamos datos pero NO forzamos la vista 'artist_panel'
-        // Dejamos que por defecto se quede en 'catalog' para que vea la vista pública primero.
         loadData(email); 
       }
     }
@@ -70,19 +61,15 @@ function MusicPage() {
     if (token && storedUserType === "user") {
       setIsListenerLoggedIn(true);
     } else {
-      // Si es artista, también podría considerarse "logueado" para ver playlists si tu backend lo permite,
-      // pero mantendremos la lógica actual.
       setIsListenerLoggedIn(false);
     }
 
-    // Por defecto iniciamos en el catálogo
     setViewMode("catalog");
     setLoading(false);
   }, []);
 
   const loadData = async (email) => {
     try {
-      // Cargamos datos de gestión en segundo plano
       const [albumsData, songsData] = await Promise.all([
         fetchArtistAlbums(email),
         fetchArtistSongs(email),
@@ -91,7 +78,6 @@ function MusicPage() {
       setSongs(songsData);
     } catch (error) {
       console.error("Error loading data:", error);
-      // No alertamos intrusivamente al cargar la página
     }
   };
 
@@ -152,7 +138,6 @@ function MusicPage() {
     return <div className="loading">Cargando...</div>;
   }
 
-  // Helpers para saber qué botón activar en el menú
   const isSongView = viewMode === "catalog" || viewMode === "song";
   const isAlbumView = viewMode === "albums" || viewMode === "album";
   const isPlaylistsView = viewMode === "playlists" || viewMode === "playlist";
@@ -165,7 +150,7 @@ function MusicPage() {
         
         <div className="header-info">
           
-          {/* BARRA DE NAVEGACIÓN (Visible para todos: Artistas y Oyentes) */}
+          {/* BARRA DE NAVEGACIÓN */}
           <div className="header-modes">
             <button
               type="button"
@@ -188,7 +173,6 @@ function MusicPage() {
               Explorar álbumes
             </button>
 
-            {/* "Mis playlists" visible si está logueado (como oyente O artista, si queremos) */}
             {(isListenerLoggedIn || artistEmail) && (
               <button
                 type="button"
@@ -202,16 +186,39 @@ function MusicPage() {
               </button>
             )}
 
-            {/* --- BOTÓN EXTRA SOLO PARA ARTISTAS --- */}
+            {/* --- BOTONES EXCLUSIVOS PARA ARTISTAS --- */}
             {artistEmail && (
-              <button
-                type="button"
-                className={`btn-mode ${isArtistPanelView ? "active" : ""}`}
-                style={{ marginLeft: '10px', backgroundColor: isArtistPanelView ? '#fff' : 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
-                onClick={() => setViewMode("artist_panel")}
-              >
-                ✏️ Gestionar Música
-              </button>
+              <>
+                {/* 1. Botón Gestionar (Panel interno React) */}
+                <button
+                  type="button"
+                  className={`btn-mode ${isArtistPanelView ? "active" : ""}`}
+                  style={{ marginLeft: '10px', backgroundColor: isArtistPanelView ? '#fff' : 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
+                  onClick={() => setViewMode("artist_panel")}
+                >
+                  ✏️ Gestionar Música
+                </button>
+
+                {/* 2. Botón Subir Canción (Redirige a HTML) */}
+                <button
+                  type="button"
+                  className="btn-mode"
+                  style={{ marginLeft: '10px', backgroundColor: 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
+                  onClick={() => window.location.href = "/FormularioSubidaCancion.html"}
+                >
+                  🎵 Subir Canción
+                </button>
+
+                {/* 3. Botón Subir Álbum (Redirige a HTML) */}
+                <button
+                  type="button"
+                  className="btn-mode"
+                  style={{ marginLeft: '5px', backgroundColor: 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
+                  onClick={() => window.location.href = "/FormularioAlbum.html"}
+                >
+                  💿 Subir Álbum
+                </button>
+              </>
             )}
           </div>
 
@@ -244,7 +251,6 @@ function MusicPage() {
       {/* RENDERIZADO DE VISTAS                     */}
       {/* ------------------------------------------------------ */}
 
-      {/* 1. Catálogo de Canciones */}
       {viewMode === "catalog" && (
         <PublicCatalog onSelectSong={handleSelectSong} />
       )}
@@ -256,7 +262,6 @@ function MusicPage() {
         />
       )}
 
-      {/* 2. Catálogo de Álbumes */}
       {viewMode === "albums" && (
         <PublicAlbumCatalog onSelectAlbum={handleSelectAlbum} />
       )}
@@ -269,7 +274,6 @@ function MusicPage() {
         />
       )}
 
-      {/* 3. Playlists */}
       {viewMode === "playlists" && (
         <PlaylistsPage
           onOpenPlaylist={(id) => {
@@ -290,7 +294,6 @@ function MusicPage() {
         />
       )}
 
-      {/* 4. PANEL DE ARTISTA (Solo si artistEmail existe y está activo este modo) */}
       {artistEmail && viewMode === "artist_panel" && (
         <>
           <div className="tabs" style={{ marginTop: '20px' }}>

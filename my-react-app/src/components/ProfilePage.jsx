@@ -6,7 +6,9 @@ import {
   fetchUserAlbumPurchases, 
   fetchAlbumById,
   fetchUserByEmail,
-  fetchArtistByEmail
+  fetchArtistByEmail,
+  deleteUser,   // <--- Importado
+  deleteArtist  // <--- Importado
 } from '../services/api';
 import '../styles/ProfilePage.css';
 
@@ -18,12 +20,15 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   
   const [user, setUser] = useState(null);
-  // Estado para recordar si es 'user' o 'artist'
   const [userType, setUserType] = useState(null); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // --- NUEVO ESTADO PARA EL MODAL DE BORRADO ---
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
   const [purchasedSongs, setPurchasedSongs] = useState([]);
   const [purchasedAlbums, setPurchasedAlbums] = useState([]);
   const [activeTab, setActiveTab] = useState('songs');
@@ -38,25 +43,23 @@ export default function ProfilePage() {
   const [previewAvatar, setPreviewAvatar] = useState(null);
   const avatarInputRef = useRef(null);
 
-  // 1. Cargar datos del Perfil (Usuario o Artista)
+  // 1. Cargar datos del Perfil
   useEffect(() => {
     const loadProfileData = async () => {
       setLoading(true);
       setError(null);
       
       try {
-        // INTENTO 1: Buscar como Usuario Oyente
         const userData = await fetchUserByEmail(email);
         setUser(userData);
-        setUserType('user'); // Es un usuario
+        setUserType('user'); 
       } catch (userErr) {
-        // Si falla (404), INTENTO 2: Buscar como Artista
         console.log("No es usuario, probando como artista...");
         try {
           const artistData = await fetchArtistByEmail(email);
           if (artistData) {
             setUser(artistData);
-            setUserType('artist'); // Es un artista
+            setUserType('artist'); 
           } else {
             setError(new Error("Perfil no encontrado"));
           }
@@ -118,8 +121,6 @@ export default function ProfilePage() {
           setPurchasedAlbums(albums);
 
         } catch (err) {
-          // Es normal que falle si es un artista puro sin compras
-          console.log("Información: No se encontraron compras para este perfil.");
           setPurchasedSongs([]);
           setPurchasedAlbums([]);
         } finally {
@@ -130,7 +131,7 @@ export default function ProfilePage() {
     }
   }, [email]);
 
-  // Handlers
+  // Handlers Edición
   const handleOpenEdit = () => {
     if (user) {
       setEditForm({
@@ -160,13 +161,10 @@ export default function ProfilePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    
     formData.append('display_name', editForm.display_name);
-    
     if (editForm.password) formData.append('password', editForm.password);
     if (editForm.avatar) formData.append('avatar', editForm.avatar);
 
-    // Usamos el estado 'userType' que guardamos al cargar el perfil para saber a qué endpoint llamar
     const endpoint = userType === 'artist' ? 'artistas' : 'usuarios'; 
 
     try {
@@ -180,6 +178,29 @@ export default function ProfilePage() {
       window.location.reload();
     } catch (err) {
       alert('Error: ' + err.message);
+    }
+  };
+
+  // --- HANDLER DE BORRADO ---
+  const handleDeleteProfile = async () => {
+    try {
+      if (userType === 'artist') {
+        await deleteArtist(email);
+      } else {
+        await deleteUser(email);
+      }
+      
+      // Limpiar sesión y redirigir
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("tokenType");
+      localStorage.removeItem("userType");
+      localStorage.removeItem("userData");
+      
+      alert("Tu cuenta ha sido eliminada correctamente.");
+      window.location.href = "/";
+      
+    } catch (err) {
+      alert("Error al eliminar el perfil: " + err.message);
     }
   };
 
@@ -219,7 +240,17 @@ export default function ProfilePage() {
 
             <div className="profile-actions">
               {isOwner && (
-                <button className="btn-edit" onClick={handleOpenEdit}>Editar Perfil</button>
+                <>
+                  <button className="btn-edit" onClick={handleOpenEdit}>Editar Perfil</button>
+                  {/* --- BOTÓN DE ELIMINAR --- */}
+                  <button 
+                    className="btn-share" 
+                    style={{ color: '#ef4444', borderColor: '#ef4444', background: '#fff' }}
+                    onClick={() => setShowDeleteModal(true)}
+                  >
+                    Eliminar Perfil
+                  </button>
+                </>
               )}
               <button className="btn-share">Compartir</button>
             </div>
@@ -303,6 +334,7 @@ export default function ProfilePage() {
         )}
       </main>
 
+      {/* --- MODAL DE EDICIÓN --- */}
       {showEditModal && (
         <div className="modal-overlay" onClick={handleCloseEdit}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -334,6 +366,42 @@ export default function ProfilePage() {
                 <button type="submit" className="btn btn-primary">Guardar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN --- */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 style={{color: '#ef4444'}}>Eliminar Cuenta</h2>
+              <button className="close-btn" onClick={() => setShowDeleteModal(false)}>&times;</button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ marginBottom: '20px', color: '#374151' }}>
+                ¿Estás seguro de que deseas eliminar tu cuenta permanentemente? 
+                <br/><br/>
+                <strong>Esta acción no se puede deshacer</strong> y perderás acceso a tus compras y contenido.
+              </p>
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-outline" 
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  style={{ backgroundColor: '#ef4444' }}
+                  onClick={handleDeleteProfile}
+                >
+                  Sí, eliminar cuenta
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

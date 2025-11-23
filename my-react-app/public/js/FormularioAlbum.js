@@ -340,6 +340,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document
           .querySelectorAll(".song-item.selected")
           .forEach((songItem) => songItem.classList.remove("selected"));
+
+        // --- NUEVA LÍNEA: REDIRECCIÓN ---
+        window.location.href = "/musica";
       })
       .catch((error) => {
         console.error("Error al subir el álbum:", error);
