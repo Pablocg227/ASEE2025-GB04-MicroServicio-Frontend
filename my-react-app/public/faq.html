@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preguntas Frecuentes - Resound Música</title>
+    <style>
+        /* Estilos base copiados de MusicGlobal.css para mantener coherencia */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .btn-back {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.6);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .btn-back:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+
+        /* Contenedor principal */
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        /* Estilos del acordeón (details/summary) */
+        details {
+            background: white;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        details:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        summary {
+            padding: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none; /* Ocultar el triángulo por defecto */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #2d3748;
+        }
+
+        /* Triángulo personalizado */
+        summary::after {
+            content: '+';
+            font-size: 1.5rem;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        details[open] summary::after {
+            content: '-';
+        }
+
+        details[open] summary {
+            border-bottom: 1px solid #f0f0f0;
+            background-color: #fcfcfc;
+        }
+
+        .faq-content {
+            padding: 20px;
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            margin-bottom: 40px;
+            color: #888;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <h1>Resound Música</h1>
+            <span style="opacity:0.8; font-size:1rem; margin-top:5px;">Centro de Ayuda</span>
+        </div>
+        <a href="/musica" class="btn-back">← Volver a la App</a>
+    </header>
+
+    <div class="container">
+        
+        <h2>🎧 Para Oyentes</h2>
+
+        <details>
+            <summary>¿Es necesario pagar para escuchar música?</summary>
+            <div class="faq-content">
+                Puedes explorar el catálogo libremente. Sin embargo, para descargar canciones o álbumes en alta calidad y apoyar directamente a los artistas independientes, ofrecemos un sistema de compra directa. Algunas canciones pueden ser gratuitas si el artista así lo decide.
+            </div>
+        </details>
+
+        <details>
+            <summary>¿Cómo puedo crear una playlist?</summary>
+            <div class="faq-content">
+                ¡Es muy fácil! Inicia sesión en tu cuenta, ve a la sección "Mis playlists" y pulsa en "Nueva playlist". Luego, mientras exploras canciones, verás un botón "Añadir a playlist" en los detalles de cada pista.
+            </div>
+        </details>
+
+        <details>
+            <summary>He comprado una canción, ¿dónde la encuentro?</summary>
+            <div class="faq-content">
+                Todas tus compras se guardan automáticamente en tu perfil. Pulsa en el icono de usuario (👤) arriba a la derecha para ver tu colección de canciones y álbumes comprados.
+            </div>
+        </details>
+
+        <details>
+            <summary>¿Puedo descargar un recibo de mi compra?</summary>
+            <div class="faq-content">
+                Sí. Justo después de realizar una compra exitosa, se generará y descargará automáticamente un recibo en formato PDF con los detalles de la transacción y el importe pagado.
+            </div>
+        </details>
+
+        <h2>🎤 Para Artistas</h2>
+
+        <details>
+            <summary>¿Qué formatos de audio se aceptan?</summary>
+            <div class="faq-content">
+                Para garantizar la mejor experiencia, aceptamos archivos en formato <strong>MP3, WAV, FLAC y OGG</strong>. Recomendamos subir archivos WAV o FLAC para mantener la máxima calidad de audio posible.
+            </div>
+        </details>
+
+        <details>
+            <summary>¿Cómo subo mi primer álbum?</summary>
+            <div class="faq-content">
+                Primero debes estar registrado como artista. Una vez dentro, verás un botón en la barra superior llamado "💿 Subir Álbum". Allí podrás definir el título, la portada y seleccionar las canciones que ya hayas subido previamente a la plataforma.
+            </div>
+        </details>
+
+        <details>
+            <summary>¿Puedo poner precio a mis canciones?</summary>
+            <div class="faq-content">
+                Absolutamente. Resound Música apoya a los artistas independientes. Al subir una canción o álbum, puedes establecer el precio que desees (o dejarlo en 0€ si quieres ofrecerlo gratis). Los oyentes también tienen la opción de pagar más del precio base si desean apoyarte extra.
+            </div>
+        </details>
+
+        <details>
+            <summary>¿Cómo edito o elimino una canción?</summary>
+            <div class="faq-content">
+                Desde la pantalla principal, pulsa el botón "✏️ Gestionar Música". Accederás a tu panel privado donde podrás ver tus tablas de canciones y álbumes. Allí encontrarás botones para modificar datos o eliminar contenido.
+            </div>
+        </details>
+
+        <h2>⚙️ Cuenta y Seguridad</h2>
+
+        <details>
+            <summary>¿Cómo puedo eliminar mi cuenta?</summary>
+            <div class="faq-content">
+                Si deseas darte de baja, ve a tu Perfil (icono 👤), y si eres el dueño de la cuenta, verás un botón rojo llamado "Eliminar Perfil". Te pediremos confirmación antes de borrar permanentemente tus datos y contenido.
+            </div>
+        </details>
+
+        <details>
+            <summary>He olvidado mi contraseña, ¿qué hago?</summary>
+            <div class="faq-content">
+                Por seguridad, no podemos recuperar tu contraseña anterior. Sin embargo, puedes contactar con soporte técnico enviando un correo a <em>soporte@resoundmusica.com</em> para iniciar un proceso de restablecimiento de credenciales.
+            </div>
+        </details>
+
+    </div>
+
+    <div class="footer">
+        &copy; 2025 Resound Música. Proyecto Académico de Microservicios.
+    </div>
+
+</body>
+</html>

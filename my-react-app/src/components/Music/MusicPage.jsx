@@ -150,9 +150,9 @@ function MusicPage() {
         
         <div className="header-info">
           
-          {/* BARRA DE NAVEGACIÓN */}
+          {/* BARRA DE NAVEGACIÓN IZQUIERDA */}
           <div className="header-modes">
-            <button
+             <button
               type="button"
               className={`btn-mode ${isSongView ? "active" : ""}`}
               onClick={() => {
@@ -185,11 +185,9 @@ function MusicPage() {
                 Mis playlists
               </button>
             )}
-
-            {/* --- BOTONES EXCLUSIVOS PARA ARTISTAS --- */}
-            {artistEmail && (
+            
+             {artistEmail && (
               <>
-                {/* 1. Botón Gestionar (Panel interno React) */}
                 <button
                   type="button"
                   className={`btn-mode ${isArtistPanelView ? "active" : ""}`}
@@ -198,8 +196,6 @@ function MusicPage() {
                 >
                   ✏️ Gestionar Música
                 </button>
-
-                {/* 2. Botón Subir Canción (Redirige a HTML) */}
                 <button
                   type="button"
                   className="btn-mode"
@@ -208,8 +204,6 @@ function MusicPage() {
                 >
                   🎵 Subir Canción
                 </button>
-
-                {/* 3. Botón Subir Álbum (Redirige a HTML) */}
                 <button
                   type="button"
                   className="btn-mode"
@@ -222,8 +216,20 @@ function MusicPage() {
             )}
           </div>
 
-          {/* ZONA DERECHA: PERFIL Y LOGOUT */}
-          <div className="header-auth">
+          {/* ZONA DERECHA: AYUDA, PERFIL Y LOGOUT */}
+          <div className="header-auth" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            {/* BOTÓN DE AYUDA ------------------ */}
+            <button 
+              type="button" 
+              className="btn-mode"
+              style={{ backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.5)' }}
+              onClick={() => window.location.href = "/faq.html"}
+              title="Preguntas Frecuentes"
+            >
+              ❓ Ayuda
+            </button>
+            {/* --------------------------- */}
+
             {currentUserEmail ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <div 
