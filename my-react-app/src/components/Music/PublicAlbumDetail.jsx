@@ -1,4 +1,3 @@
-// src/components/PublicAlbumDetail.jsx
 import React, { useEffect, useState } from "react";
 import {
   fetchAlbumById,
@@ -8,6 +7,7 @@ import {
   purchaseAlbum,
   getStoredUserEmail,
 } from "../../services/musicApi";
+import ShareModal from "../ShareModal"; // Ajusta ruta si es necesario
 
 import { fileURL, formatDate } from "../../utils/helpers";
 import "../../styles/MusicGlobal.css";
@@ -19,11 +19,16 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
   const [error, setError] = useState("");
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [plays, setPlays] = useState(0);
+  
+  // Estado para Compras
   const [showPurchase, setShowPurchase] = useState(false);
   const [payAmount, setPayAmount] = useState("");
   const [purchaseError, setPurchaseError] = useState("");
   const [purchaseOk, setPurchaseOk] = useState("");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+
+  // Estado para Compartir
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // 1) Cargar álbum + canciones + nombres de artista
   useEffect(() => {
@@ -60,7 +65,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
                 );
               }
 
-              // Fallback bonito si no se encuentra en msUsuarios
+              // Fallback bonito
               return typeof email === "string"
                 ? email.split("@")[0]
                 : "Artista";
@@ -93,7 +98,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
     loadAlbum();
   }, [albumId]);
 
-  // 2) Track actual y sincronizar reproducciones con numVisualizaciones
+  // 2) Track actual y sincronizar reproducciones
   const canciones = tracks;
 
   const currentTrack =
@@ -177,7 +182,6 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
       return;
     }
 
-    // El backend validará que price_paid >= precio actual del álbum
     setPurchaseLoading(true);
     setPurchaseError("");
     setPurchaseOk("");
@@ -202,7 +206,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
     }
   };
 
-  // 4) GUARDAS (después de TODOS los hooks, para no romper la regla de hooks)
+  // 4) GUARDAS
   if (albumId == null) return null;
   if (loading) return <div className="loading">Cargando álbum…</div>;
   if (error) return <div className="no-content">{error}</div>;
@@ -232,7 +236,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
       </button>
 
       <div className="album-layout">
-        {/* COLUMNA IZQUIERDA: info + “player” + tracklist */}
+        {/* COLUMNA IZQUIERDA */}
         <div className="album-main">
           <div className="album-player-card">
             <h2 className="album-title">{album.titulo}</h2>
@@ -273,6 +277,17 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
                   ? `${price.toFixed(2)} € o más`
                   : "(elige tu precio)"}
               </button>
+
+              {/* BOTÓN DE COMPARTIR */}
+              <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ marginTop: '10px', width: '100%', backgroundColor: "#e0f2fe", borderColor: "#bae6fd", color: "#0284c7" }}
+                  onClick={() => setShowShareModal(true)}
+              >
+                  📢 Compartir Álbum
+              </button>
+
               <p className="purchase-note">
                 Incluye todas las canciones del álbum en tu biblioteca digital.
               </p>
@@ -305,7 +320,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
                         type="button"
                         className="track-play-btn"
                         onClick={(e) => {
-                          e.stopPropagation(); // para que no navegue al detalle
+                          e.stopPropagation();
                           setCurrentTrackIndex(index);
                           handlePlayClick(song);
                         }}
@@ -389,6 +404,14 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
           </div>
         </div>
       )}
+
+      {/* MODAL DE COMPARTIR */}
+      <ShareModal 
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={`Descubre el álbum "${album.titulo}" de ${artistNames} en Resound Música`}
+        url={window.location.href} 
+      />
     </section>
   );
 };

@@ -7,9 +7,10 @@ import {
   fetchAlbumById,
   fetchUserByEmail,
   fetchArtistByEmail,
-  deleteUser,   // <--- Importado
-  deleteArtist  // <--- Importado
+  deleteUser,   
+  deleteArtist  
 } from '../services/api';
+import ShareModal from './ShareModal'; 
 import '../styles/ProfilePage.css';
 
 const API_BASE_URL = 'http://127.0.0.1:8001';
@@ -25,9 +26,8 @@ export default function ProfilePage() {
   const [error, setError] = useState(null);
 
   const [showEditModal, setShowEditModal] = useState(false);
-  
-  // --- NUEVO ESTADO PARA EL MODAL DE BORRADO ---
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   
   const [purchasedSongs, setPurchasedSongs] = useState([]);
   const [purchasedAlbums, setPurchasedAlbums] = useState([]);
@@ -181,7 +181,6 @@ export default function ProfilePage() {
     }
   };
 
-  // --- HANDLER DE BORRADO ---
   const handleDeleteProfile = async () => {
     try {
       if (userType === 'artist') {
@@ -189,16 +188,12 @@ export default function ProfilePage() {
       } else {
         await deleteUser(email);
       }
-      
-      // Limpiar sesión y redirigir
       localStorage.removeItem("authToken");
       localStorage.removeItem("tokenType");
       localStorage.removeItem("userType");
       localStorage.removeItem("userData");
-      
       alert("Tu cuenta ha sido eliminada correctamente.");
       window.location.href = "/";
-      
     } catch (err) {
       alert("Error al eliminar el perfil: " + err.message);
     }
@@ -242,7 +237,6 @@ export default function ProfilePage() {
               {isOwner && (
                 <>
                   <button className="btn-edit" onClick={handleOpenEdit}>Editar Perfil</button>
-                  {/* --- BOTÓN DE ELIMINAR --- */}
                   <button 
                     className="btn-share" 
                     style={{ color: '#ef4444', borderColor: '#ef4444', background: '#fff' }}
@@ -252,7 +246,9 @@ export default function ProfilePage() {
                   </button>
                 </>
               )}
-              <button className="btn-share">Compartir</button>
+              <button className="btn-share" onClick={() => setShowShareModal(true)}>
+                Compartir Perfil
+              </button>
             </div>
           </div>
         </div>
@@ -283,7 +279,12 @@ export default function ProfilePage() {
             {activeTab === 'songs' && (
               purchasedSongs.length > 0 ? (
                 purchasedSongs.map(song => (
-                  <div key={song.id} className="purchase-card">
+                  // --- AQUI ESTA EL CAMBIO: onClick para navegar ---
+                  <div 
+                    key={song.id} 
+                    className="purchase-card"
+                    onClick={() => navigate(`/musica?songId=${song.id}`)}
+                  >
                     <div className="card-image">
                       <img 
                         src={`${FILES_BASE_URL}${song.imgPortada || song.portada}?t=${Date.now()}`}
@@ -308,7 +309,12 @@ export default function ProfilePage() {
             {activeTab === 'albums' && (
               purchasedAlbums.length > 0 ? (
                 purchasedAlbums.map(album => (
-                  <div key={album.id} className="purchase-card">
+                  // --- AQUI ESTA EL CAMBIO: onClick para navegar ---
+                  <div 
+                    key={album.id} 
+                    className="purchase-card"
+                    onClick={() => navigate(`/musica?albumId=${album.id}`)}
+                  >
                     <div className="card-image">
                       <img 
                         src={`${FILES_BASE_URL}${album.imgPortada || album.portada}?t=${Date.now()}`}
@@ -334,7 +340,7 @@ export default function ProfilePage() {
         )}
       </main>
 
-      {/* --- MODAL DE EDICIÓN --- */}
+      {/* MODALES (Edición, Borrado, Compartir) - Código idéntico al anterior... */}
       {showEditModal && (
         <div className="modal-overlay" onClick={handleCloseEdit}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -370,7 +376,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* --- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN --- */}
       {showDeleteModal && (
         <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -385,26 +390,20 @@ export default function ProfilePage() {
                 <strong>Esta acción no se puede deshacer</strong> y perderás acceso a tus compras y contenido.
               </p>
               <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn btn-outline" 
-                  onClick={() => setShowDeleteModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-primary" 
-                  style={{ backgroundColor: '#ef4444' }}
-                  onClick={handleDeleteProfile}
-                >
-                  Sí, eliminar cuenta
-                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
+                <button type="button" className="btn btn-primary" style={{ backgroundColor: '#ef4444' }} onClick={handleDeleteProfile}>Sí, eliminar cuenta</button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <ShareModal 
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={`Echa un vistazo al perfil de ${username} en Resound Música`}
+        url={window.location.href} 
+      />
     </div>
   );
 }
