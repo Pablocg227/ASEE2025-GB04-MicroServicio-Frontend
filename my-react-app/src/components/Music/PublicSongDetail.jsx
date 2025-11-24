@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+// 1. IMPORTAMOS JSPDF
+import { jsPDF } from "jspdf"; 
 import {
   fetchSongById,
   fetchAlbumById,
@@ -71,7 +73,6 @@ const PublicSongDetail = ({ songId, onBack }) => {
         setPlays(data.numVisualizaciones || 0);
         setPayAmount(data.precio ?? "");
 
-        // --- Álbum al que pertenece, si lo hay ---
         if (data.idAlbum != null) {
           try {
             const albumData = await fetchAlbumById(data.idAlbum);
@@ -81,7 +82,6 @@ const PublicSongDetail = ({ songId, onBack }) => {
           }
         }
 
-        // --- Nombre del artista (display_name) ---
         if (
           Array.isArray(data.artistas_emails) &&
           data.artistas_emails.length
@@ -101,7 +101,6 @@ const PublicSongDetail = ({ songId, onBack }) => {
                   firstEmail,
               );
             } else {
-              // fallback bonito
               setArtistName(
                 typeof firstEmail === "string"
                   ? firstEmail.split("@")[0]
@@ -128,13 +127,9 @@ const PublicSongDetail = ({ songId, onBack }) => {
     }
   }, [songId]);
 
-  // Llamada a la API para registrar reproducción
   const handlePlayClick = async () => {
     if (!song || !song.id) return;
-
-    // Incremento optimista en UI
     setPlays((p) => p + 1);
-
     try {
       const updated = await registerSongPlay(song.id);
       if (updated && typeof updated.numVisualizaciones === "number") {
@@ -143,14 +138,12 @@ const PublicSongDetail = ({ songId, onBack }) => {
       }
     } catch (error) {
       console.error("Error registrando reproducción:", error);
-      // Podrías revertir el +1 si quisieras ser estricto
     }
   };
 
   const openPurchaseModal = () => {
     setPurchaseError("");
     setPurchaseOk("");
-
     const token = localStorage.getItem("authToken");
     if (!token) {
       setPurchaseError("Necesitas iniciar sesión para comprar.");
@@ -164,6 +157,69 @@ const PublicSongDetail = ({ songId, onBack }) => {
     setPurchaseError("");
     setPurchaseOk("");
   };
+
+  // ---------------------------------------------------------
+  // 2. NUEVA FUNCIÓN: GENERAR RECIBO PDF
+  // ---------------------------------------------------------
+  const generateReceiptPDF = (songData, pricePaid, userEmail, artistLabel) => {
+    const doc = new jsPDF();
+
+    // Colores y Fuentes
+    doc.setTextColor(40);
+    doc.setFontSize(22);
+    doc.text("Resound Música", 20, 20);
+
+    doc.setFontSize(16);
+    doc.text("Recibo de Compra Digital", 20, 30);
+
+    // Línea separadora
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+
+    // Información de la compra
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 20, 50);
+    doc.text(`ID Transacción: ${Math.random().toString(36).substr(2, 9).toUpperCase()}`, 20, 60); // Simulado
+    doc.text(`Comprador: ${userEmail}`, 20, 70);
+
+    // Detalles del Producto
+    doc.setFillColor(240, 240, 240); // Gris claro
+    doc.rect(20, 85, 170, 10, 'F'); // Fondo encabezado tabla
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("Concepto", 25, 91);
+    doc.text("Artista", 100, 91);
+    doc.text("Precio", 160, 91);
+    
+    doc.setFont("helvetica", "normal");
+    const songName = songData.nomCancion || songData.titulo || "Canción";
+    
+    // Determinamos el precio final mostrado
+    let finalPrice = pricePaid;
+    if (finalPrice === null || finalPrice === "") {
+        finalPrice = songData.precio || 0;
+    }
+    const priceString = formatPrice(finalPrice);
+
+    doc.text(songName, 25, 105);
+    doc.text(artistLabel, 100, 105);
+    doc.text(priceString, 160, 105);
+
+    // Total
+    doc.line(20, 115, 190, 115);
+    doc.setFont("helvetica", "bold");
+    doc.text(`TOTAL PAGADO: ${priceString}`, 130, 125);
+
+    // Pie de página
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(10);
+    doc.text("Gracias por apoyar la música independiente.", 20, 150);
+    doc.text("Este es un comprobante digital generado automáticamente.", 20, 155);
+
+    // Descargar
+    doc.save(`Recibo_Resound_${songName.replace(/\s+/g, '_')}.pdf`);
+  };
+  // ---------------------------------------------------------
 
   const handleConfirmPurchase = async () => {
     if (!song) return;
@@ -200,7 +256,13 @@ const PublicSongDetail = ({ songId, onBack }) => {
         pricePaid: amount,
         userEmail: email,
       });
+      
       setPurchaseOk("Compra realizada correctamente. ¡Disfruta tu pista!");
+
+      // 3. LLAMADA A LA FUNCIÓN DE PDF TRAS EL ÉXITO
+      const artistLabel = artistName || getArtistLabel(song);
+      generateReceiptPDF(song, amount, email, artistLabel);
+
     } catch (error) {
       const msg =
         error?.response?.data?.detail ||
@@ -253,10 +315,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
     ? fileURL(coverPath)
     : "https://via.placeholder.com/500x500?text=Sin+portada";
 
-  // Álbum correcto: primero el cargado, luego el que traiga la canción
   const albumTitle = album?.titulo || song.albumTitulo || "Sencillo";
-
-  // Preferimos display_name si lo tenemos
   const artistLabel = artistName || getArtistLabel(song);
 
   let publishedLabel = null;
@@ -367,13 +426,13 @@ const PublicSongDetail = ({ songId, onBack }) => {
                 onClick={closePurchaseModal}
                 disabled={purchaseLoading}
               >
-                Cancelar
+                Cerrar
               </button>
               <button
                 type="button"
                 className="btn-primary"
                 onClick={handleConfirmPurchase}
-                disabled={purchaseLoading}
+                disabled={purchaseLoading || purchaseOk} // Deshabilitar si ya se compró
               >
                 {purchaseLoading ? "Procesando…" : "Pagar y comprar"}
               </button>
@@ -382,7 +441,6 @@ const PublicSongDetail = ({ songId, onBack }) => {
         </div>
       )}
 
-      {/* ⬇ Modal "Añadir a playlist" */}
       {showAddToPlaylist && song && (
         <AddToPlaylistModal
           song={song}
