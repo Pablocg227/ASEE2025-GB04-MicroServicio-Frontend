@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preguntas Frecuentes - Resound Música</title>
+    <title>Ayuda y Soporte - Resound Música</title>
     <style>
-        /* Estilos base copiados de MusicGlobal.css para mantener coherencia */
+        /* Estilos base copiados de MusicGlobal.css */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
             background-color: #f5f5f5;
@@ -59,7 +59,7 @@
             margin-bottom: 20px;
         }
 
-        /* Estilos del acordeón (details/summary) */
+        /* Acordeón */
         details {
             background: white;
             margin-bottom: 15px;
@@ -77,14 +77,13 @@
             padding: 20px;
             font-weight: 600;
             cursor: pointer;
-            list-style: none; /* Ocultar el triángulo por defecto */
+            list-style: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: #2d3748;
         }
 
-        /* Triángulo personalizado */
         summary::after {
             content: '+';
             font-size: 1.5rem;
@@ -106,6 +105,66 @@
             color: #666;
             line-height: 1.6;
             font-size: 0.95rem;
+        }
+
+        /* ESTILOS DEL FORMULARIO DE CONTACTO */
+        .contact-card {
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-top: 40px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .contact-card h3 {
+            margin-top: 0;
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            box-sizing: border-box; /* Para que el padding no rompa el ancho */
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
         }
 
         .footer {
@@ -201,15 +260,104 @@
         <details>
             <summary>He olvidado mi contraseña, ¿qué hago?</summary>
             <div class="faq-content">
-                Por seguridad, no podemos recuperar tu contraseña anterior. Sin embargo, puedes contactar con soporte técnico enviando un correo a <em>soporte@resoundmusica.com</em> para iniciar un proceso de restablecimiento de credenciales.
+                Por seguridad, no podemos recuperar tu contraseña anterior. Sin embargo, puedes contactar con soporte técnico enviando un formulario desde esta misma página para iniciar un proceso de restablecimiento.
             </div>
         </details>
+
+        <h2 style="border:none; margin-top:60px; text-align:center;">¿No encuentras lo que buscas?</h2>
+        
+        <div class="contact-card">
+            <h3>📩 Contactar con Soporte</h3>
+            <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">
+                Rellena este formulario para enviarnos un correo estructurado. Te responderemos lo antes posible.
+            </p>
+
+            <form id="supportForm">
+                <div class="form-group">
+                    <label for="userName">Tu Nombre</label>
+                    <input type="text" id="userName" placeholder="Ej: Juan Pérez" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="issueType">Tipo de Incidencia</label>
+                    <select id="issueType" required>
+                        <option value="" disabled selected>Selecciona una opción...</option>
+                        <option value="Problema de Login/Cuenta">Problema de Acceso / Cuenta</option>
+                        <option value="Error en Subida de Música">Error al subir Música</option>
+                        <option value="Problema con Pagos/Compras">Problema con Pagos o Compras</option>
+                        <option value="Bug o Error Técnico">Reportar un Bug / Error técnico</option>
+                        <option value="Otra consulta">Otra consulta general</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="messageBody">Detalles del problema</label>
+                    <textarea id="messageBody" placeholder="Describe tu problema con el mayor detalle posible..." required></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" id="btnApp" class="btn-send" style="flex: 1;">
+                        ✉️ Abrir App Correo (Outlook/Móvil)
+                    </button>
+                    <button type="button" id="btnGmail" class="btn-send" style="flex: 1; background: linear-gradient(135deg, #DB4437 0%, #C5221F 100%);">
+                        G Abrir en Gmail Web
+                    </button>
+                </div>
+            </form>
+        </div>
 
     </div>
 
     <div class="footer">
         &copy; 2025 Resound Música. Proyecto Académico de Microservicios.
     </div>
+
+    <script>
+        function getData() {
+            const name = document.getElementById('userName').value;
+            const issue = document.getElementById('issueType').value;
+            const body = document.getElementById('messageBody').value;
+            
+            if(!name || !issue || !body) {
+                alert("Por favor, rellena todos los campos antes de enviar.");
+                return null;
+            }
+
+            const emailDestino = "cacrespoc@alumnos.unex.es";
+            
+            // Construir textos
+            const subject = `[Soporte Resound] ${issue} - ${name}`;
+            const fullBody = `Hola Soporte,\n\nSoy ${name}.\n\nTipo de incidencia: ${issue}\n\nDescripción del problema:\n------------------------------------------------\n${body}\n------------------------------------------------\n\nEspero su respuesta. Gracias.`;
+
+            return { emailDestino, subject, fullBody };
+        }
+
+        // OPCIÓN 1: APP DE ESCRITORIO / MÓVIL (mailto:)
+        document.getElementById('btnApp').addEventListener('click', function() {
+            const data = getData();
+            if(!data) return;
+
+            const subjectEnc = encodeURIComponent(data.subject);
+            const bodyEnc = encodeURIComponent(data.fullBody);
+            
+            window.location.href = `mailto:${data.emailDestino}?subject=${subjectEnc}&body=${bodyEnc}`;
+        });
+
+        // OPCIÓN 2: GMAIL EN EL NAVEGADOR
+        document.getElementById('btnGmail').addEventListener('click', function() {
+            const data = getData();
+            if(!data) return;
+
+            const subjectEnc = encodeURIComponent(data.subject);
+            const bodyEnc = encodeURIComponent(data.fullBody);
+
+            // URL mágica de Gmail para componer correo
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${data.emailDestino}&su=${subjectEnc}&body=${bodyEnc}`;
+            
+            // Abrir en nueva pestaña
+            window.open(gmailUrl, '_blank');
+        });
+    </script>
 
 </body>
 </html>
