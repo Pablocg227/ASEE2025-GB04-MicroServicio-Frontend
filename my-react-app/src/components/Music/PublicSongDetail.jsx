@@ -5,9 +5,11 @@ import {
   fetchArtistsByEmails,
   registerSongPlay,
   purchaseSong,
-  getStoredUserEmail
+  getStoredUserEmail,
+  checkSongPurchase,
 } from "../../services/musicApi";
 import AddToPlaylistModal from "./AddToPlaylistModal";
+import CommentsSection from "./CommentsSection";
 
 import { fileURL } from "../../utils/helpers";
 
@@ -22,27 +24,18 @@ const formatPrice = (value) => {
   }).format(num);
 };
 
+// ... (getArtistLabel función auxiliar se mantiene igual) ...
 const getArtistLabel = (song) => {
   if (Array.isArray(song.artistas) && song.artistas.length > 0) {
     const first = song.artistas[0];
-    if (typeof first === "string") {
-      return song.artistas.join(", ");
-    }
-    if (first.nickname) {
-      return song.artistas.map((a) => a.nickname).join(", ");
-    }
-    if (first.email) {
-      return song.artistas.map((a) => a.email).join(", ");
-    }
+    if (typeof first === "string") return song.artistas.join(", ");
+    if (first.nickname) return song.artistas.map((a) => a.nickname).join(", ");
+    if (first.email) return song.artistas.map((a) => a.email).join(", ");
   }
-
-  if (Array.isArray(song.artistas_emails) && song.artistas_emails.length > 0) {
+  if (Array.isArray(song.artistas_emails) && song.artistas_emails.length > 0)
     return song.artistas_emails.join(", ");
-  }
-
   if (song.artistNickname) return song.artistNickname;
   if (song.artistEmail) return song.artistEmail;
-
   return "Artista desconocido";
 };
 
@@ -53,11 +46,17 @@ const PublicSongDetail = ({ songId, onBack }) => {
   const [plays, setPlays] = useState(0);
   const [album, setAlbum] = useState(null);
   const [artistName, setArtistName] = useState("");
+
+  // Estados de compra
   const [showPurchase, setShowPurchase] = useState(false);
   const [payAmount, setPayAmount] = useState("");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseError, setPurchaseError] = useState("");
   const [purchaseOk, setPurchaseOk] = useState("");
+
+  // Estado VERIFICACIÓN COMPRA
+  const [isPurchased, setIsPurchased] = useState(false); //
+
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
 
   useEffect(() => {
@@ -65,13 +64,22 @@ const PublicSongDetail = ({ songId, onBack }) => {
       try {
         setLoading(true);
         setErr("");
+        setIsPurchased(false);
 
         const data = await fetchSongById(songId);
         setSong(data);
         setPlays(data.numVisualizaciones || 0);
         setPayAmount(data.precio ?? "");
 
-        // --- Álbum al que pertenece, si lo hay ---
+        // Verificar si ya está comprada
+        const userEmail = getStoredUserEmail();
+        const token = localStorage.getItem("authToken");
+        if (token && userEmail) {
+          const bought = await checkSongPurchase(userEmail, songId);
+          setIsPurchased(bought);
+        }
+
+        // --- Álbum al que pertenece ---
         if (data.idAlbum != null) {
           try {
             const albumData = await fetchAlbumById(data.idAlbum);
@@ -81,7 +89,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
           }
         }
 
-        // --- Nombre del artista (display_name) ---
+        // --- Artista ---
         if (
           Array.isArray(data.artistas_emails) &&
           data.artistas_emails.length
@@ -89,10 +97,8 @@ const PublicSongDetail = ({ songId, onBack }) => {
           try {
             const emails = data.artistas_emails;
             const artistsByEmail = await fetchArtistsByEmails(emails);
-
             const firstEmail = emails[0];
             const artist = artistsByEmail[firstEmail];
-
             if (artist) {
               setArtistName(
                 artist.display_name ||
@@ -101,7 +107,6 @@ const PublicSongDetail = ({ songId, onBack }) => {
                   firstEmail,
               );
             } else {
-              // fallback bonito
               setArtistName(
                 typeof firstEmail === "string"
                   ? firstEmail.split("@")[0]
@@ -109,10 +114,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
               );
             }
           } catch (error) {
-            console.warn(
-              "No se pudo resolver el display_name del artista:",
-              error,
-            );
+            console.warn("Error resolving artist:", error);
           }
         }
       } catch (error) {
@@ -128,13 +130,9 @@ const PublicSongDetail = ({ songId, onBack }) => {
     }
   }, [songId]);
 
-  // Llamada a la API para registrar reproducción
   const handlePlayClick = async () => {
     if (!song || !song.id) return;
-
-    // Incremento optimista en UI
     setPlays((p) => p + 1);
-
     try {
       const updated = await registerSongPlay(song.id);
       if (updated && typeof updated.numVisualizaciones === "number") {
@@ -142,15 +140,13 @@ const PublicSongDetail = ({ songId, onBack }) => {
         setPlays(updated.numVisualizaciones);
       }
     } catch (error) {
-      console.error("Error registrando reproducción:", error);
-      // Podrías revertir el +1 si quisieras ser estricto
+      console.error(error);
     }
   };
 
   const openPurchaseModal = () => {
     setPurchaseError("");
     setPurchaseOk("");
-
     const token = localStorage.getItem("authToken");
     if (!token) {
       setPurchaseError("Necesitas iniciar sesión para comprar.");
@@ -167,24 +163,20 @@ const PublicSongDetail = ({ songId, onBack }) => {
 
   const handleConfirmPurchase = async () => {
     if (!song) return;
-
     const token = localStorage.getItem("authToken");
     if (!token) {
       setPurchaseError("Inicia sesión para completar la compra.");
       return;
     }
-
     const email = getStoredUserEmail();
     if (!email) {
       setPurchaseError("No se pudo leer el email del usuario.");
       return;
     }
-
     const amount =
       payAmount === "" || payAmount === null
         ? null
         : Number.parseFloat(payAmount);
-
     if (payAmount !== "" && (Number.isNaN(amount) || amount < 0)) {
       setPurchaseError("Introduce un importe válido (0€ o más).");
       return;
@@ -200,7 +192,8 @@ const PublicSongDetail = ({ songId, onBack }) => {
         pricePaid: amount,
         userEmail: email,
       });
-      setPurchaseOk("Compra realizada correctamente. ¡Disfruta tu pista!");
+      setPurchaseOk("Compra realizada correctamente.");
+      setIsPurchased(true); // Actualizamos estado visual inmediatamente
     } catch (error) {
       const msg =
         error?.response?.data?.detail ||
@@ -212,61 +205,25 @@ const PublicSongDetail = ({ songId, onBack }) => {
     }
   };
 
-  if (!songId) {
+  if (!songId)
     return (
       <div className="public-song-detail">
-        <p>No se ha seleccionado ninguna canción.</p>
-        {onBack && (
-          <button type="button" className="btn-link" onClick={onBack}>
-            Volver al catálogo
-          </button>
-        )}
+        <p>No seleccionada.</p>
       </div>
     );
-  }
-
-  if (loading) {
-    return <div className="loading">Cargando canción…</div>;
-  }
-
-  if (err || !song) {
+  if (loading) return <div className="loading">Cargando canción…</div>;
+  if (err || !song)
     return (
       <div className="public-song-detail">
-        <p className="error">{err || "Canción no encontrada."}</p>
-        {onBack && (
-          <button type="button" className="btn-link" onClick={onBack}>
-            Volver al catálogo
-          </button>
-        )}
+        <p className="error">{err || "No encontrada."}</p>
       </div>
     );
-  }
 
-  const coverPath =
-    song.imgPortada ||
-    song.imgSencillo ||
-    song.portada ||
-    song.coverPath ||
-    null;
-
-  const coverSrc = coverPath
-    ? fileURL(coverPath)
-    : "https://via.placeholder.com/500x500?text=Sin+portada";
-
-  // Álbum correcto: primero el cargado, luego el que traiga la canción
+  const coverSrc =
+    fileURL(song.imgPortada || song.portada) ||
+    "https://via.placeholder.com/500x500?text=Sin+portada";
   const albumTitle = album?.titulo || song.albumTitulo || "Sencillo";
-
-  // Preferimos display_name si lo tenemos
   const artistLabel = artistName || getArtistLabel(song);
-
-  let publishedLabel = null;
-  if (song.date) {
-    const d = new Date(song.date);
-    const formatted = Number.isNaN(d.getTime())
-      ? String(song.date)
-      : d.toLocaleDateString("es-ES");
-    publishedLabel = `Publicado el ${formatted}`;
-  }
 
   return (
     <div className="public-song-detail">
@@ -278,20 +235,13 @@ const PublicSongDetail = ({ songId, onBack }) => {
 
       <div className="public-song-layout">
         <div className="public-song-cover">
-          <img
-            src={coverSrc}
-            alt={song.nomCancion || song.titulo || "Portada de canción"}
-          />
+          <img src={coverSrc} alt={song.nomCancion} />
         </div>
 
         <div className="public-song-info">
-          <h2 className="song-title">
-            {song.nomCancion || song.titulo || "Canción sin título"}
-          </h2>
+          <h2 className="song-title">{song.nomCancion || "Sin título"}</h2>
           <div className="song-artist">por {artistLabel}</div>
           <div className="song-album">del álbum {albumTitle}</div>
-
-          {publishedLabel && <div className="song-date">{publishedLabel}</div>}
 
           <div className="song-stats">
             <button
@@ -305,15 +255,35 @@ const PublicSongDetail = ({ songId, onBack }) => {
           </div>
 
           <div className="song-purchase">
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={openPurchaseModal}
-            >
-              Comprar pista digital {formatPrice(song.precio)}
-            </button>
+            {/* LÓGICA DE VISUALIZACIÓN DE BOTÓN */}
+            {isPurchased ? (
+              <button
+                type="button"
+                className="btn-success"
+                disabled
+                style={{
+                  cursor: "default",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                ✅ Pista comprada
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={openPurchaseModal}
+              >
+                Comprar pista digital {formatPrice(song.precio)}
+              </button>
+            )}
+
             <p className="purchase-note">
-              Recibirás la pista y las futuras descargas ligadas a tu cuenta.
+              {isPurchased
+                ? "Ya tienes esta canción en tu biblioteca."
+                : "Recibirás la pista y las futuras descargas ligadas a tu cuenta."}
             </p>
           </div>
 
@@ -326,6 +296,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
               Añadir a playlist
             </button>
           </div>
+          {song && <CommentsSection targetType="song" targetId={song.id} />}
         </div>
       </div>
 
@@ -333,15 +304,9 @@ const PublicSongDetail = ({ songId, onBack }) => {
         <div className="modal-backdrop">
           <div className="modal-card">
             <h3>Confirmar compra</h3>
-            <p className="modal-subtitle">
-              {song.nomCancion || "Canción"} · {artistLabel}
-            </p>
-
-            <label className="modal-label" htmlFor="song-price">
-              Importe a pagar (€)
-            </label>
+            <p className="modal-subtitle">{song.nomCancion}</p>
+            <label className="modal-label">Importe a pagar (€)</label>
             <input
-              id="song-price"
               type="number"
               min="0"
               step="0.01"
@@ -350,16 +315,10 @@ const PublicSongDetail = ({ songId, onBack }) => {
               onChange={(e) => setPayAmount(e.target.value)}
               placeholder="Usar precio por defecto"
             />
-            <p className="modal-hint">
-              Puedes dejarlo en blanco para usar el precio actual (
-              {formatPrice(song.precio)}).
-            </p>
-
             {purchaseError && (
               <div className="modal-error">{purchaseError}</div>
             )}
             {purchaseOk && <div className="modal-success">{purchaseOk}</div>}
-
             <div className="modal-actions">
               <button
                 type="button"
@@ -369,20 +328,21 @@ const PublicSongDetail = ({ songId, onBack }) => {
               >
                 Cancelar
               </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleConfirmPurchase}
-                disabled={purchaseLoading}
-              >
-                {purchaseLoading ? "Procesando…" : "Pagar y comprar"}
-              </button>
+              {!purchaseOk && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleConfirmPurchase}
+                  disabled={purchaseLoading}
+                >
+                  {purchaseLoading ? "Procesando…" : "Pagar y comprar"}
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ⬇ Modal "Añadir a playlist" */}
       {showAddToPlaylist && song && (
         <AddToPlaylistModal
           song={song}
