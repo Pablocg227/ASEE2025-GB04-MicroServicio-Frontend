@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+// 1. IMPORTAR useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   fetchArtistAlbums,
   fetchArtistSongs,
@@ -14,6 +15,7 @@ import PublicAlbumCatalog from "./PublicAlbumCatalog";
 import PublicAlbumDetail from "./PublicAlbumDetail";
 import PlaylistsPage from "./PlaylistsPage";
 import PlaylistDetailPage from "./PlaylistDetailPage";
+import ArtistStatsPanel from "./ArtistStatsPanel"; // Importar el nuevo componente
 
 import "../../styles/MusicGlobal.css";
 
@@ -22,15 +24,11 @@ function MusicPage() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Datos de sesión
   const [artistEmail, setArtistEmail] = useState(null);
   const [isListenerLoggedIn, setIsListenerLoggedIn] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
-  // Navegación interna
   const [activeTab, setActiveTab] = useState("albums"); 
-  
-  // Modos de vista
   const [viewMode, setViewMode] = useState("catalog");
   
   const [selectedSongId, setSelectedSongId] = useState(null);
@@ -38,6 +36,8 @@ function MusicPage() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
 
   const navigate = useNavigate();
+  // 2. HOOK LOCATION
+  const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -64,9 +64,24 @@ function MusicPage() {
       setIsListenerLoggedIn(false);
     }
 
-    setViewMode("catalog");
+    // 3. LÓGICA DE DETECCIÓN DE PARÁMETROS URL (Redirección desde Perfil)
+    const params = new URLSearchParams(location.search);
+    const paramSongId = params.get('songId');
+    const paramAlbumId = params.get('albumId');
+
+    if (paramSongId) {
+      setSelectedSongId(paramSongId);
+      setViewMode("song");
+    } else if (paramAlbumId) {
+      setSelectedAlbumId(paramAlbumId);
+      setViewMode("album");
+    } else {
+      // Solo si no hay parámetros y no estamos ya en un modo específico, vamos al catálogo por defecto
+      setViewMode("catalog");
+    }
+
     setLoading(false);
-  }, []);
+  }, [location.search]); // 4. Dependencia para que se ejecute si cambia la URL
 
   const loadData = async (email) => {
     try {
@@ -108,13 +123,16 @@ function MusicPage() {
     window.location.href = "/login.html";
   };
 
-  // --- Handlers de navegación pública ---
   const handleSelectSong = (songId) => {
     setSelectedSongId(songId);
     setViewMode("song");
   };
 
   const handleBackToSongCatalog = () => {
+    // Si venimos de un enlace directo (perfil), limpiar la URL para que no vuelva a abrirse
+    if (location.search) {
+      navigate('/musica', { replace: true });
+    }
     setSelectedSongId(null);
     setViewMode("catalog");
   };
@@ -125,6 +143,9 @@ function MusicPage() {
   };
 
   const handleBackToAlbumCatalog = () => {
+    if (location.search) {
+      navigate('/musica', { replace: true });
+    }
     setSelectedAlbumId(null);
     setViewMode("albums");
   };
@@ -142,6 +163,7 @@ function MusicPage() {
   const isAlbumView = viewMode === "albums" || viewMode === "album";
   const isPlaylistsView = viewMode === "playlists" || viewMode === "playlist";
   const isArtistPanelView = viewMode === "artist_panel";
+  const isStatsView = viewMode === "stats"; // Nuevo estado de vista
 
   return (
     <div className="App">
@@ -150,7 +172,6 @@ function MusicPage() {
         
         <div className="header-info">
           
-          {/* BARRA DE NAVEGACIÓN */}
           <div className="header-modes">
             <button
               type="button"
@@ -158,6 +179,8 @@ function MusicPage() {
               onClick={() => {
                 setViewMode("catalog");
                 setSelectedSongId(null);
+                // Limpiar URL si hay params
+                if(location.search) navigate('/musica');
               }}
             >
               Explorar canciones
@@ -168,6 +191,7 @@ function MusicPage() {
               onClick={() => {
                 setViewMode("albums");
                 setSelectedAlbumId(null);
+                if(location.search) navigate('/musica');
               }}
             >
               Explorar álbumes
@@ -180,16 +204,15 @@ function MusicPage() {
                 onClick={() => {
                   setViewMode("playlists");
                   setSelectedPlaylistId(null);
+                  if(location.search) navigate('/musica');
                 }}
               >
                 Mis playlists
               </button>
             )}
 
-            {/* --- BOTONES EXCLUSIVOS PARA ARTISTAS --- */}
             {artistEmail && (
               <>
-                {/* 1. Botón Gestionar (Panel interno React) */}
                 <button
                   type="button"
                   className={`btn-mode ${isArtistPanelView ? "active" : ""}`}
@@ -198,8 +221,14 @@ function MusicPage() {
                 >
                   ✏️ Gestionar Música
                 </button>
-
-                {/* 2. Botón Subir Canción (Redirige a HTML) */}
+                <button
+                  type="button"
+                  className={`btn-mode ${isStatsView ? "active" : ""}`}
+                  style={{ marginLeft: '10px', backgroundColor: isStatsView ? '#fff' : 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
+                  onClick={() => setViewMode("stats")}
+                >
+                  📈 Panel de estadísticas
+                </button>
                 <button
                   type="button"
                   className="btn-mode"
@@ -208,8 +237,6 @@ function MusicPage() {
                 >
                   🎵 Subir Canción
                 </button>
-
-                {/* 3. Botón Subir Álbum (Redirige a HTML) */}
                 <button
                   type="button"
                   className="btn-mode"
@@ -222,8 +249,17 @@ function MusicPage() {
             )}
           </div>
 
-          {/* ZONA DERECHA: PERFIL Y LOGOUT */}
-          <div className="header-auth">
+          <div className="header-auth" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button 
+              type="button" 
+              className="btn-mode"
+              style={{ backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.5)' }}
+              onClick={() => window.location.href = "/faq.html"}
+              title="Preguntas Frecuentes"
+            >
+              ❓ Ayuda
+            </button>
+
             {currentUserEmail ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <div 
@@ -247,10 +283,7 @@ function MusicPage() {
         </div>
       </header>
 
-      {/* ------------------------------------------------------ */}
-      {/* RENDERIZADO DE VISTAS                     */}
-      {/* ------------------------------------------------------ */}
-
+      {/* RENDERIZADO */}
       {viewMode === "catalog" && (
         <PublicCatalog onSelectSong={handleSelectSong} />
       )}
@@ -325,6 +358,11 @@ function MusicPage() {
             )}
           </div>
         </>
+      )}
+
+      {/* Nuevo panel de estadísticas */}
+      {artistEmail && viewMode === "stats" && (
+        <ArtistStatsPanel artistEmail={artistEmail} />
       )}
     </div>
   );
