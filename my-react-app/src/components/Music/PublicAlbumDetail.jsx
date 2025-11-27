@@ -5,28 +5,26 @@ import {
   fetchAlbumById,
   fetchAlbumTracks,
   fetchArtistsByEmails,
-  registerSongPlay,
   purchaseAlbum,
   getStoredUserEmail,
-  getPurchasedAlbums, // De tu rama
+  getPurchasedAlbums,
 } from "../../services/musicApi";
 
-// IMPORTAMOS LAS FUNCIONES DE VALORACIÓN (De develop)
+// IMPORTAMOS LAS FUNCIONES DE VALORACIÓN
 import {
   postAlbumPurchase,
-  postSongReproduction,
   fetchAlbumRatingAvg,
   fetchUserRating,
   postRating,
   updateRating,
 } from "../../services/api";
 
-import CommentsSection from "./CommentsSection"; // De tu rama
+import CommentsSection from "./CommentsSection";
 import AddToPlaylistModal from "./AddToPlaylistModal";
-import ShareModal from "../ShareModal"; // De develop
+import ShareModal from "../ShareModal";
 import { fileURL, formatDate } from "../../utils/helpers";
 import "../../styles/MusicGlobal.css";
-import "../../styles/valoraciones.css"; // Estilos de las estrellas
+import "../../styles/valoraciones.css";
 
 // ------------------ SUB-COMPONENTES AUXILIARES (ESTRELLAS) ------------------
 const StarRating = ({ value }) => {
@@ -68,7 +66,8 @@ const InteractiveRating = ({ currentRating, onRate }) => {
 };
 
 // ------------------ COMPONENTE PRINCIPAL ------------------
-const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
+// Aceptamos onPlay
+const PublicAlbumDetail = ({ albumId, onBack, onOpenSong, onPlay }) => {
   const [album, setAlbum] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,13 +82,13 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
   const [purchaseOk, setPurchaseOk] = useState("");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
 
-  // Verificación (De tu rama)
+  // Verificación
   const [isAlbumPurchased, setIsAlbumPurchased] = useState(false);
 
-  // Estado del modal de compartir (De develop)
+  // Estado del modal de compartir
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // --- NUEVOS ESTADOS PARA VALORACIÓN (De develop) ---
+  // --- NUEVOS ESTADOS PARA VALORACIÓN ---
   const [avgRating, setAvgRating] = useState(0);
   const [myRating, setMyRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
@@ -114,7 +113,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
           fetchAlbumTracks(albumId),
         ]);
 
-        // Verificación de compra de álbum (Tu lógica)
+        // Verificación de compra de álbum
         const userEmail = getStoredUserEmail();
         const token = localStorage.getItem("authToken");
         if (token && userEmail) {
@@ -208,33 +207,17 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
     setPlays(currentTrack.numVisualizaciones || 0);
   }, [currentTrack]);
 
-  // 3) Registrar reproducción + estadísticas
-  const handlePlayClick = async (song) => {
+  // 3) MANEJO DE REPRODUCCIÓN (MODIFICADO)
+  // Delegamos la reproducción y estadísticas a MusicPage (onPlay)
+  const handlePlayClick = (song) => {
     if (!song || !song.id) return;
+
+    // Feedback visual local
     setPlays((p) => p + 1);
 
-    // Estadística histórica (Develop)
-    const email = getStoredUserEmail();
-    postSongReproduction(song.id, email).catch((err) =>
-      console.warn("Aviso: No se pudo guardar estadística histórica", err),
-    );
-
-    // Registro real de reproducción
-    try {
-      const updated = await registerSongPlay(song.id);
-      if (updated && typeof updated.numVisualizaciones === "number") {
-        setPlays(updated.numVisualizaciones);
-
-        setTracks((prev) =>
-          prev.map((t) =>
-            t.id === song.id
-              ? { ...t, numVisualizaciones: updated.numVisualizaciones }
-              : t,
-          ),
-        );
-      }
-    } catch (err) {
-      console.error(err);
+    // Llamada al reproductor global
+    if (onPlay) {
+      onPlay(song);
     }
   };
 
@@ -343,7 +326,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
       }
 
       setPurchaseOk("Álbum comprado correctamente.");
-      setIsAlbumPurchased(true); // Actualizar estado local
+      setIsAlbumPurchased(true);
     } catch (err) {
       const msg =
         err?.response?.data?.detail || err?.message || "Error compra.";
@@ -363,8 +346,6 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
     fileURL(album.imgPortada || album.portada) || "/placeholder-album.png";
   const artistNames = album.artistas_display || "Varios artistas";
   const price = Number(album.precio ?? 0);
-
-  // Variable auxiliar para mostrar géneros si existieran en el objeto album (opcional)
   const genresText = album.generos ? album.generos.join(", ") : "";
 
   return (
@@ -429,7 +410,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
                 </button>
               )}
 
-              {/* BOTÓN DE COMPARTIR (De develop) */}
+              {/* BOTÓN DE COMPARTIR */}
               <button
                 type="button"
                 className="btn-secondary"
@@ -478,7 +459,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
                         onClick={(e) => {
                           e.stopPropagation();
                           setCurrentTrackIndex(index);
-                          handlePlayClick(song);
+                          handlePlayClick(song); // <-- USAMOS LA NUEVA FUNCIÓN
                         }}
                       >
                         ▶
@@ -505,11 +486,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
         <div className="album-cover-side">
           <img src={cover} alt={album.titulo} />
 
-          {/* ======================================= */}
-          {/* SECCIÓN DE VALORACIÓN (De develop) */}
-          {/* ======================================= */}
-
-          {/* 1. Media Visual */}
+          {/* SECCIÓN DE VALORACIÓN */}
           <div className="star-rating-wrapper" style={{ marginTop: "15px" }}>
             <StarRating value={avgRating} />
             <div className="rating-text">
@@ -517,7 +494,6 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
             </div>
           </div>
 
-          {/* 2. Valoración Interactiva */}
           <div className="user-rating-section">
             <div className="user-rating-title">
               {hasRated ? "Tu valoración" : "Valora este álbum"}
@@ -530,11 +506,10 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
 
             <div className="rating-msg">{ratingMessage}</div>
           </div>
-          {/* ======================================= */}
         </div>
       </div>
 
-      {/* 2. IMPORTANTE: Añadir la sección de comentarios (De tu rama) */}
+      {/* Comentarios */}
       {album && (
         <div style={{ marginTop: "40px" }}>
           <CommentsSection targetType="album" targetId={album.id} />
@@ -588,7 +563,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong }) => {
         </div>
       )}
 
-      {/* MODAL COMPARTIR (De develop) */}
+      {/* MODAL COMPARTIR */}
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}

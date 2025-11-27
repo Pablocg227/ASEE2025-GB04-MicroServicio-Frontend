@@ -5,16 +5,14 @@ import { jsPDF } from "jspdf";
 import {
   fetchAlbumById,
   fetchArtistsByEmails,
-  registerSongPlay,
-  fetchSongById, // De develop
+  fetchSongById,
   purchaseSong,
   getStoredUserEmail,
-  checkSongPurchase, // De tu rama (HEAD)
+  checkSongPurchase,
 } from "../../services/musicApi";
 
-// API VALORACIONES Y ESTADÍSTICAS (De develop)
+// API VALORACIONES Y ESTADÍSTICAS
 import {
-  postSongReproduction,
   postSongPurchase,
   fetchSongRatingAvg,
   fetchUserRating,
@@ -27,8 +25,8 @@ import "../../styles/valoraciones.css";
 
 // COMPONENTES
 import AddToPlaylistModal from "./AddToPlaylistModal";
-import CommentsSection from "./CommentsSection"; // De tu rama
-import ShareModal from "../ShareModal"; // De develop
+import CommentsSection from "./CommentsSection";
+import ShareModal from "../ShareModal";
 
 import { fileURL } from "../../utils/helpers";
 
@@ -101,7 +99,8 @@ const InteractiveRating = ({ currentRating, onRate }) => {
 };
 
 // ------------------ COMPONENTE PRINCIPAL ------------------
-const PublicSongDetail = ({ songId, onBack }) => {
+// Aceptamos onPlay en las props
+const PublicSongDetail = ({ songId, onBack, onPlay }) => {
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -116,14 +115,14 @@ const PublicSongDetail = ({ songId, onBack }) => {
   const [purchaseError, setPurchaseError] = useState("");
   const [purchaseOk, setPurchaseOk] = useState("");
 
-  // Estado VERIFICACIÓN COMPRA (Tu rama)
+  // Estado VERIFICACIÓN COMPRA
   const [isPurchased, setIsPurchased] = useState(false);
 
   // Playlist + Share
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // Rating (Develop)
+  // Rating
   const [avgRating, setAvgRating] = useState(0);
   const [myRating, setMyRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
@@ -139,7 +138,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
         setErr("");
         setIsPurchased(false);
 
-        // 1. Cargar Canción
+        // Cargar Canción
         const data = await fetchSongById(songId);
         setSong(data);
         setPlays(data.numVisualizaciones || 0);
@@ -148,7 +147,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
         const userEmail = getStoredUserEmail();
         const token = localStorage.getItem("authToken");
 
-        // 2. Verificar si ya está comprada (Tu rama)
+        // Verificar si ya está comprada
         if (token && userEmail) {
           try {
             const bought = await checkSongPurchase(userEmail, songId);
@@ -158,7 +157,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
           }
         }
 
-        // 3. Cargar Valoraciones (Develop)
+        // Cargar Valoraciones
         try {
           const media = await fetchSongRatingAvg(songId);
           setAvgRating(Number(media) || 0);
@@ -177,7 +176,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
           } catch {}
         }
 
-        // 4. Cargar Álbum
+        // Cargar Álbum
         if (data.idAlbum != null) {
           try {
             const albumData = await fetchAlbumById(data.idAlbum);
@@ -185,7 +184,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
           } catch {}
         }
 
-        // 5. Cargar Artistas (Resolución combinada)
+        // Cargar Artistas (Resolución combinada)
         if (
           Array.isArray(data.artistas_emails) &&
           data.artistas_emails.length
@@ -220,25 +219,18 @@ const PublicSongDetail = ({ songId, onBack }) => {
   // ------------------ REPRODUCCIÓN ------------------
   const handlePlayClick = async () => {
     if (!song || !song.id) return;
+
+    // 1. Feedback visual local inmediato
     setPlays((p) => p + 1);
 
-    // Estadística histórica (Develop)
-    const email = getStoredUserEmail();
-    postSongReproduction(song.id, email).catch(() => {});
-
-    // Registro real
-    try {
-      const updated = await registerSongPlay(song.id);
-      if (updated?.numVisualizaciones != null) {
-        setSong(updated);
-        setPlays(updated.numVisualizaciones);
-      }
-    } catch (error) {
-      console.error(error);
+    // 2. Llamamos al padre (MusicPage) para que reproduzca el audio Y guarde las estadísticas.
+    // Así el reproductor global gestiona el estado y no se duplican stats.
+    if (onPlay) {
+      onPlay(song);
     }
   };
 
-  // ------------------ RATING (Develop) ------------------
+  // ------------------ RATING ------------------
   const handleUserRate = async (stars) => {
     const email = getStoredUserEmail();
     if (!email) {
@@ -298,7 +290,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
     }
   };
 
-  // ------------------ PDF (Develop) ------------------
+  // ------------------ PDF ------------------
   const generateReceiptPDF = (songData, pricePaid, userEmail, artistLabel) => {
     const doc = new jsPDF();
 
@@ -395,17 +387,17 @@ const PublicSongDetail = ({ songId, onBack }) => {
         userEmail: email,
       });
 
-      // 1. Guardar estadística de compra (Develop)
+      // 1. Guardar estadística de compra
       try {
         const precioFinal = amount ?? song.precio ?? 0;
         await postSongPurchase(song.id, precioFinal);
       } catch {}
 
-      // 2. Actualizar estado visual (Tu rama)
+      // 2. Actualizar estado visual
       setIsPurchased(true);
       setPurchaseOk("Compra realizada con éxito.");
 
-      // 3. Generar PDF (Develop)
+      // 3. Generar PDF
       generateReceiptPDF(
         song,
         amount,
@@ -451,7 +443,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
   const albumTitle = album?.titulo || song.albumTitulo || "Sencillo";
   const artistLabel = artistName || getArtistLabel(song);
 
-  // Fecha (Develop)
+  // Fecha
   let publishedLabel = null;
   if (song.date) {
     const d = new Date(song.date);
@@ -507,7 +499,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
           </div>
 
           <div className="song-purchase">
-            {/* LOGICA DE VISUALIZACIÓN DE BOTÓN (Tu rama: Muestra verde si comprado) */}
+            {/* LOGICA DE VISUALIZACIÓN DE BOTÓN */}
             {isPurchased ? (
               <button
                 type="button"
@@ -560,7 +552,7 @@ const PublicSongDetail = ({ songId, onBack }) => {
             </button>
           </div>
 
-          {/* COMENTARIOS (Tu rama) */}
+          {/* COMENTARIOS */}
           {song && <CommentsSection targetType="song" targetId={song.id} />}
         </div>
       </div>
