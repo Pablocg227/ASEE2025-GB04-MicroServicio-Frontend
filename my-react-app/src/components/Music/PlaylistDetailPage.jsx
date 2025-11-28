@@ -4,13 +4,18 @@ import {
   removeSongFromPlaylist,
   updatePlaylist,
   fetchSongById,
-  registerSongPlay,
 } from "../../services/musicApi";
 import PlaylistFormModal from "./PlaylistFormModal";
 import { fileURL } from "../../utils/helpers";
 import "../../styles/Playlists.css";
 
-export default function PlaylistDetailPage({ playlistId, onBack, onOpenSong }) {
+// Aceptamos onPlay
+export default function PlaylistDetailPage({
+  playlistId,
+  onBack,
+  onOpenSong,
+  onPlay,
+}) {
   const [playlist, setPlaylist] = useState(null);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,12 +58,10 @@ export default function PlaylistDetailPage({ playlistId, onBack, onOpenSong }) {
     loadPlaylist();
   };
 
-  const handlePlaySong = async (songId) => {
-    try {
-      await registerSongPlay(songId);
-      // si quieres refrescar contadores: loadPlaylist();
-    } catch (error) {
-      console.error("Error registrando reproducción desde playlist:", error);
+  // NUEVO HANDLER: Delegamos al padre (MusicPage)
+  const handlePlaySong = (song) => {
+    if (onPlay) {
+      onPlay(song);
     }
   };
 
@@ -125,7 +128,7 @@ export default function PlaylistDetailPage({ playlistId, onBack, onOpenSong }) {
                       <button
                         type="button"
                         className="playlist-song-play"
-                        onClick={() => handlePlaySong(song.id)}
+                        onClick={() => handlePlaySong(song)}
                       >
                         ▶
                       </button>
@@ -148,7 +151,6 @@ export default function PlaylistDetailPage({ playlistId, onBack, onOpenSong }) {
                         </span>
                       )}
 
-                      {/* Botón que aparece al pasar el ratón */}
                       <button
                         type="button"
                         className="playlist-song-open"

@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
-// 1. IMPORTAR useLocation
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   fetchArtistAlbums,
   fetchArtistSongs,
   getArtistEmailFromToken,
+  registerSongPlay,
+  getStoredUserEmail,
 } from "../../services/musicApi";
+
+// Importamos la estadística histórica para centralizarla aquí
+import { postSongReproduction } from "../../services/api";
 
 import AlbumList from "./AlbumList";
 import SongList from "./SongList";
@@ -15,7 +19,8 @@ import PublicAlbumCatalog from "./PublicAlbumCatalog";
 import PublicAlbumDetail from "./PublicAlbumDetail";
 import PlaylistsPage from "./PlaylistsPage";
 import PlaylistDetailPage from "./PlaylistDetailPage";
-import ArtistStatsPanel from "./ArtistStatsPanel"; // Importar el nuevo componente
+import ArtistStatsPanel from "./ArtistStatsPanel";
+import BottomPlayer from "./BottomPlayer";
 
 import "../../styles/MusicGlobal.css";
 
@@ -23,20 +28,25 @@ function MusicPage() {
   const [albums, setAlbums] = useState([]);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [artistEmail, setArtistEmail] = useState(null);
   const [isListenerLoggedIn, setIsListenerLoggedIn] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
-  const [activeTab, setActiveTab] = useState("albums"); 
+  const [activeTab, setActiveTab] = useState("albums");
   const [viewMode, setViewMode] = useState("catalog");
-  
+
   const [selectedSongId, setSelectedSongId] = useState(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState(null);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
 
+  // Estado para el reproductor global
+  const [currentSong, setCurrentSong] = useState(null);
+
+  // Estado para forzar re-renderizado del reproductor
+  const [playTrigger, setPlayTrigger] = useState(0);
+
   const navigate = useNavigate();
-  // 2. HOOK LOCATION
   const location = useLocation();
 
   useEffect(() => {
@@ -54,7 +64,7 @@ function MusicPage() {
       const email = getArtistEmailFromToken();
       if (email) {
         setArtistEmail(email);
-        loadData(email); 
+        loadData(email);
       }
     }
 
@@ -64,10 +74,9 @@ function MusicPage() {
       setIsListenerLoggedIn(false);
     }
 
-    // 3. LÓGICA DE DETECCIÓN DE PARÁMETROS URL (Redirección desde Perfil)
     const params = new URLSearchParams(location.search);
-    const paramSongId = params.get('songId');
-    const paramAlbumId = params.get('albumId');
+    const paramSongId = params.get("songId");
+    const paramAlbumId = params.get("albumId");
 
     if (paramSongId) {
       setSelectedSongId(paramSongId);
@@ -76,12 +85,40 @@ function MusicPage() {
       setSelectedAlbumId(paramAlbumId);
       setViewMode("album");
     } else {
-      // Solo si no hay parámetros y no estamos ya en un modo específico, vamos al catálogo por defecto
       setViewMode("catalog");
     }
 
     setLoading(false);
-  }, [location.search]); // 4. Dependencia para que se ejecute si cambia la URL
+  }, [location.search]);
+
+  // --------------------------------------------------------
+  // LÓGICA DE REPRODUCCIÓN GLOBAL (Audio + Estadísticas)
+  // --------------------------------------------------------
+  const handleGlobalPlay = async (song) => {
+    if (!song || !song.id) return;
+
+    // 1. Activar audio y mostrar en BottomPlayer
+    setCurrentSong(song);
+
+    setPlayTrigger((prev) => prev + 1);
+
+    // 2. Registrar estadística histórica (quien reprodujo qué)
+    const email = getStoredUserEmail();
+    if (email) {
+      postSongReproduction(song.id, email).catch((err) =>
+        console.warn("No se pudo guardar estadística histórica", err),
+      );
+    }
+
+    // 3. Registrar incremento de visualización (contador total)
+    try {
+      await registerSongPlay(song.id);
+      console.log(`Reproducción registrada para ID: ${song.id}`);
+    } catch (error) {
+      console.error("Error al registrar reproducción:", error);
+    }
+  };
+  // --------------------------------------------------------
 
   const loadData = async (email) => {
     try {
@@ -129,9 +166,8 @@ function MusicPage() {
   };
 
   const handleBackToSongCatalog = () => {
-    // Si venimos de un enlace directo (perfil), limpiar la URL para que no vuelva a abrirse
     if (location.search) {
-      navigate('/musica', { replace: true });
+      navigate("/musica", { replace: true });
     }
     setSelectedSongId(null);
     setViewMode("catalog");
@@ -144,7 +180,7 @@ function MusicPage() {
 
   const handleBackToAlbumCatalog = () => {
     if (location.search) {
-      navigate('/musica', { replace: true });
+      navigate("/musica", { replace: true });
     }
     setSelectedAlbumId(null);
     setViewMode("albums");
@@ -163,15 +199,18 @@ function MusicPage() {
   const isAlbumView = viewMode === "albums" || viewMode === "album";
   const isPlaylistsView = viewMode === "playlists" || viewMode === "playlist";
   const isArtistPanelView = viewMode === "artist_panel";
-  const isStatsView = viewMode === "stats"; // Nuevo estado de vista
+  const isStatsView = viewMode === "stats";
 
   return (
-    <div className="App">
+    // IMPORTANTE: Asegúrate de que este div cierra correctamente al final
+    <div
+      className="music-page-wrapper"
+      style={{ paddingBottom: currentSong ? "90px" : "0" }}
+    >
       <header className="app-header">
         <h1>Resound Música</h1>
-        
+
         <div className="header-info">
-          
           <div className="header-modes">
             <button
               type="button"
@@ -179,8 +218,7 @@ function MusicPage() {
               onClick={() => {
                 setViewMode("catalog");
                 setSelectedSongId(null);
-                // Limpiar URL si hay params
-                if(location.search) navigate('/musica');
+                if (location.search) navigate("/musica");
               }}
             >
               Explorar canciones
@@ -191,7 +229,7 @@ function MusicPage() {
               onClick={() => {
                 setViewMode("albums");
                 setSelectedAlbumId(null);
-                if(location.search) navigate('/musica');
+                if (location.search) navigate("/musica");
               }}
             >
               Explorar álbumes
@@ -204,7 +242,7 @@ function MusicPage() {
                 onClick={() => {
                   setViewMode("playlists");
                   setSelectedPlaylistId(null);
-                  if(location.search) navigate('/musica');
+                  if (location.search) navigate("/musica");
                 }}
               >
                 Mis playlists
@@ -216,7 +254,13 @@ function MusicPage() {
                 <button
                   type="button"
                   className={`btn-mode ${isArtistPanelView ? "active" : ""}`}
-                  style={{ marginLeft: '10px', backgroundColor: isArtistPanelView ? '#fff' : 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
+                  style={{
+                    marginLeft: "10px",
+                    backgroundColor: isArtistPanelView
+                      ? "#fff"
+                      : "rgba(0,0,0,0.2)",
+                    borderColor: "#fff",
+                  }}
                   onClick={() => setViewMode("artist_panel")}
                 >
                   ✏️ Gestionar Música
@@ -224,7 +268,11 @@ function MusicPage() {
                 <button
                   type="button"
                   className={`btn-mode ${isStatsView ? "active" : ""}`}
-                  style={{ marginLeft: '10px', backgroundColor: isStatsView ? '#fff' : 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
+                  style={{
+                    marginLeft: "10px",
+                    backgroundColor: isStatsView ? "#fff" : "rgba(0,0,0,0.2)",
+                    borderColor: "#fff",
+                  }}
                   onClick={() => setViewMode("stats")}
                 >
                   📈 Panel de estadísticas
@@ -232,16 +280,28 @@ function MusicPage() {
                 <button
                   type="button"
                   className="btn-mode"
-                  style={{ marginLeft: '10px', backgroundColor: 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
-                  onClick={() => window.location.href = "/FormularioSubidaCancion.html"}
+                  style={{
+                    marginLeft: "10px",
+                    backgroundColor: "rgba(0,0,0,0.2)",
+                    borderColor: "#fff",
+                  }}
+                  onClick={() =>
+                    (window.location.href = "/FormularioSubidaCancion.html")
+                  }
                 >
                   🎵 Subir Canción
                 </button>
                 <button
                   type="button"
                   className="btn-mode"
-                  style={{ marginLeft: '5px', backgroundColor: 'rgba(0,0,0,0.2)', borderColor: '#fff' }}
-                  onClick={() => window.location.href = "/FormularioAlbum.html"}
+                  style={{
+                    marginLeft: "5px",
+                    backgroundColor: "rgba(0,0,0,0.2)",
+                    borderColor: "#fff",
+                  }}
+                  onClick={() =>
+                    (window.location.href = "/FormularioAlbum.html")
+                  }
                 >
                   💿 Subir Álbum
                 </button>
@@ -249,33 +309,53 @@ function MusicPage() {
             )}
           </div>
 
-          <div className="header-auth" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button 
-              type="button" 
+          <div
+            className="header-auth"
+            style={{ display: "flex", alignItems: "center", gap: "15px" }}
+          >
+            <button
+              type="button"
               className="btn-mode"
-              style={{ backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.5)' }}
-              onClick={() => window.location.href = "/faq.html"}
+              style={{
+                backgroundColor: "transparent",
+                border: "1px solid rgba(255,255,255,0.5)",
+              }}
+              onClick={() => (window.location.href = "/faq.html")}
               title="Preguntas Frecuentes"
             >
               ❓ Ayuda
             </button>
 
             {currentUserEmail ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div 
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "15px" }}
+              >
+                <div
                   title="Ir a mi perfil"
                   onClick={() => navigate(`/perfil/${currentUserEmail}`)}
-                  style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+                  style={{ cursor: "pointer", fontSize: "1.5rem" }}
                 >
                   👤
                 </div>
-                {artistEmail && <span style={{fontSize: '0.8rem', opacity: 0.8}}>Artista</span>}
-                <button type="button" className="btn-auth" onClick={handleLogout}>
+                {artistEmail && (
+                  <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                    Artista
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="btn-auth"
+                  onClick={handleLogout}
+                >
                   Cerrar sesión
                 </button>
               </div>
             ) : (
-              <button type="button" className="btn-auth" onClick={handleLoginClick}>
+              <button
+                type="button"
+                className="btn-auth"
+                onClick={handleLoginClick}
+              >
                 Iniciar sesión
               </button>
             )}
@@ -283,7 +363,7 @@ function MusicPage() {
         </div>
       </header>
 
-      {/* RENDERIZADO */}
+      {/* RENDERIZADO DE VISTAS */}
       {viewMode === "catalog" && (
         <PublicCatalog onSelectSong={handleSelectSong} />
       )}
@@ -292,6 +372,7 @@ function MusicPage() {
         <PublicSongDetail
           songId={selectedSongId}
           onBack={handleBackToSongCatalog}
+          onPlay={handleGlobalPlay} // <--- Pasamos la función global
         />
       )}
 
@@ -304,6 +385,7 @@ function MusicPage() {
           albumId={selectedAlbumId}
           onBack={handleBackToAlbumCatalog}
           onOpenSong={handleOpenSongFromAlbum}
+          onPlay={handleGlobalPlay} // <--- Pasamos la función global
         />
       )}
 
@@ -324,12 +406,13 @@ function MusicPage() {
             setSelectedPlaylistId(null);
           }}
           onOpenSong={handleSelectSong}
+          onPlay={handleGlobalPlay} // <--- Pasamos la función global
         />
       )}
 
       {artistEmail && viewMode === "artist_panel" && (
         <>
-          <div className="tabs" style={{ marginTop: '20px' }}>
+          <div className="tabs" style={{ marginTop: "20px" }}>
             <button
               type="button"
               className={`tab ${activeTab === "albums" ? "active" : ""}`}
@@ -360,10 +443,12 @@ function MusicPage() {
         </>
       )}
 
-      {/* Nuevo panel de estadísticas */}
       {artistEmail && viewMode === "stats" && (
         <ArtistStatsPanel artistEmail={artistEmail} />
       )}
+
+      {/* Reproductor Global */}
+      {currentSong && <BottomPlayer song={currentSong} trigger={playTrigger} />}
     </div>
   );
 }
