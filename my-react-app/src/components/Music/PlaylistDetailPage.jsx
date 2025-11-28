@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   fetchPlaylistById,
   removeSongFromPlaylist,
@@ -10,12 +11,10 @@ import { fileURL } from "../../utils/helpers";
 import "../../styles/Playlists.css";
 
 // Aceptamos onPlay
-export default function PlaylistDetailPage({
-  playlistId,
-  onBack,
-  onOpenSong,
-  onPlay,
-}) {
+export default function PlaylistDetailPage({ onPlay }) {
+  const { playlistId } = useParams();
+  const navigate = useNavigate();
+
   const [playlist, setPlaylist] = useState(null);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +60,7 @@ export default function PlaylistDetailPage({
   // NUEVO HANDLER: Delegamos al padre (MusicPage)
   const handlePlaySong = (song) => {
     if (onPlay) {
-      onPlay(song);
+      onPlay(song, songs);
     }
   };
 
@@ -84,7 +83,11 @@ export default function PlaylistDetailPage({
 
   return (
     <div className="page playlist-detail-page">
-      <button className="link-back" type="button" onClick={onBack}>
+      <button
+        className="link-back"
+        type="button"
+        onClick={() => navigate("/musica")}
+      >
         ← Volver a mis playlists
       </button>
 
@@ -154,7 +157,7 @@ export default function PlaylistDetailPage({
                       <button
                         type="button"
                         className="playlist-song-open"
-                        onClick={() => onOpenSong && onOpenSong(song.id)}
+                        onClick={() => navigate(`/musica/cancion/${song.id}`)}
                       >
                         Ver canción
                       </button>
