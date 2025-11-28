@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 
 // API
@@ -99,8 +100,11 @@ const InteractiveRating = ({ currentRating, onRate }) => {
 };
 
 // ------------------ COMPONENTE PRINCIPAL ------------------
-// Aceptamos onPlay en las props
-const PublicSongDetail = ({ songId, onBack, onPlay }) => {
+// Aceptamos onPlay
+const PublicSongDetail = ({ onPlay }) => {
+  const { songId } = useParams();
+  const navigate = useNavigate();
+
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -184,7 +188,7 @@ const PublicSongDetail = ({ songId, onBack, onPlay }) => {
           } catch {}
         }
 
-        // Cargar Artistas (Resolución combinada)
+        // Cargar Artistas
         if (
           Array.isArray(data.artistas_emails) &&
           data.artistas_emails.length
@@ -195,7 +199,6 @@ const PublicSongDetail = ({ songId, onBack, onPlay }) => {
             const firstEmail = emails[0];
             const artist = artistsByEmail[firstEmail];
 
-            // Lógica prioritaria para nombre
             setArtistName(
               artist?.display_name ||
                 artist?.nombre_artistico ||
@@ -216,15 +219,14 @@ const PublicSongDetail = ({ songId, onBack, onPlay }) => {
     loadAllData();
   }, [songId]);
 
-  // ------------------ REPRODUCCIÓN ------------------
+  // ------------------ REPRODUCCIÓN (MODIFICADO) ------------------
   const handlePlayClick = async () => {
     if (!song || !song.id) return;
 
-    // 1. Feedback visual local inmediato
+    // Feedback visual local inmediato
     setPlays((p) => p + 1);
 
-    // 2. Llamamos al padre (MusicPage) para que reproduzca el audio Y guarde las estadísticas.
-    // Así el reproductor global gestiona el estado y no se duplican stats.
+    // Llamamos al padre (MusicPage) para el reproductor global
     if (onPlay) {
       onPlay(song);
     }
@@ -256,7 +258,6 @@ const PublicSongDetail = ({ songId, onBack, onPlay }) => {
 
       setTimeout(() => setRatingMessage(""), 2000);
     } catch (err) {
-      // Intento de recuperación si falla el PUT
       if (hasRated && err.response?.status === 404) {
         try {
           await postRating(email, song.id, stars);
@@ -387,17 +388,17 @@ const PublicSongDetail = ({ songId, onBack, onPlay }) => {
         userEmail: email,
       });
 
-      // 1. Guardar estadística de compra
+      // Guardar estadística de compra
       try {
         const precioFinal = amount ?? song.precio ?? 0;
         await postSongPurchase(song.id, precioFinal);
       } catch {}
 
-      // 2. Actualizar estado visual
+      // Actualizar estado visual
       setIsPurchased(true);
       setPurchaseOk("Compra realizada con éxito.");
 
-      // 3. Generar PDF
+      // Generar PDF
       generateReceiptPDF(
         song,
         amount,
@@ -454,11 +455,12 @@ const PublicSongDetail = ({ songId, onBack, onPlay }) => {
 
   return (
     <div className="public-song-detail">
-      {onBack && (
-        <button className="btn-link back-button" onClick={onBack}>
-          ← Volver al catálogo
-        </button>
-      )}
+      <button
+        className="btn-link back-button"
+        onClick={() => navigate("/musica")}
+      >
+        ← Volver al catálogo
+      </button>
 
       <div className="public-song-layout">
         {/* IZQUIERDA: Portada + Estrellas */}

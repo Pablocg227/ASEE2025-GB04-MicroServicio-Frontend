@@ -3,8 +3,8 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 90px; /* Un poco más alto para que quepa todo */
-    background-color: #121212; /* Fondo oscuro tipo Spotify/Youtube */
+    height: 90px;
+    background-color: #121212;
     border-top: 1px solid #282828;
     display: flex;
     align-items: center;
@@ -15,7 +15,6 @@
     box-shadow: 0 -4px 15px rgba(0,0,0,0.8);
 }
 
-/* SECCIÓN IZQUIERDA: INFO */
 .player-track-info {
     display: flex;
     align-items: center;
@@ -51,14 +50,13 @@
     color: #b3b3b3;
 }
 
-/* SECCIÓN CENTRAL: CONTROLES + BARRA */
 .player-center-column {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    max-width: 600px; /* Que no se estire demasiado en pantallas grandes */
+    max-width: 600px;
 }
 
 .player-controls {
@@ -82,14 +80,22 @@
 
 .btn-player-control:hover {
     transform: scale(1.1);
-    color: #1db954; /* Un toque verde al pasar el ratón, o rojo si prefieres */
+    color: #fff;
 }
 
 .btn-player-control.main-play {
-    font-size: 2rem; /* Botón de play más grande */
+    font-size: 2rem;
 }
 
-/* LA BARRA DE PROGRESO "YOUTUBE STYLE" */
+.btn-player-control.small {
+    font-size: 1.2rem;
+    color: #b3b3b3;
+}
+
+.btn-player-control.active {
+    color: #1db954;
+}
+
 .player-progress-bar-wrapper {
     width: 100%;
     display: flex;
@@ -99,54 +105,36 @@
     color: #b3b3b3;
 }
 
-/* Estilos base del input range */
 .youtube-progress-bar {
-    -webkit-appearance: none; /* Quitar estilo por defecto */
+    -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 4px; /* Altura de la línea */
-    background: #404040; /* Color de fondo (lo no reproducido) */
+    height: 4px;
+    background: #404040;
     border-radius: 2px;
     outline: none;
     cursor: pointer;
     position: relative;
-
-    /* Truco para pintar la parte izquierda */
-    background-image: linear-gradient(#ff0000, #ff0000); /* Rojo YouTube */
+    background-image: linear-gradient(#ff0000, #ff0000);
     background-size: var(--seek-before-width, 0%) 100%;
     background-repeat: no-repeat;
 }
 
-/* El "Thumb" o bolita (Chrome, Safari, Edge) */
 .youtube-progress-bar::-webkit-slider-thumb {
     -webkit-appearance: none;
     height: 12px;
     width: 12px;
     border-radius: 50%;
-    background: #ff0000; /* Rojo */
+    background: #ff0000;
     cursor: pointer;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     transition: transform 0.1s;
-    margin-top: 0; /* Ajuste si fuera necesario */
 }
 
-/* Efecto al pasar el ratón sobre la bolita */
 .youtube-progress-bar::-webkit-slider-thumb:hover {
     transform: scale(1.3);
 }
 
-/* El "Thumb" o bolita (Firefox) */
-.youtube-progress-bar::-moz-range-thumb {
-    height: 12px;
-    width: 12px;
-    border: none;
-    border-radius: 50%;
-    background: #ff0000;
-    cursor: pointer;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-}
-
-/* SECCIÓN DERECHA: VOLUMEN */
 .player-volume {
     width: 25%;
     display: flex;
@@ -172,4 +160,84 @@
     border-radius: 50%;
     background: #fff;
     cursor: pointer;
+}
+/* ESTILOS DE LOS BOTONES DE CONTROL */
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 32px; /* Más espacio entre botones */
+    margin-bottom: 8px;
+}
+
+.btn-player-control {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column; /* Para poner el puntito debajo si es necesario */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #b3b3b3; /* Color por defecto (inactivo) */
+    padding: 0;
+    position: relative;
+}
+
+/* Hover: Se vuelve blanco */
+.btn-player-control:hover {
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+/* Iconos SVG */
+.btn-player-control svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor; /* Hereda el color del botón */
+}
+
+/* ESTADO ACTIVO (Shuffle / Repeat) */
+.btn-player-control.active {
+    color: #1db954; /* Verde "Spotify" o el color de tu marca */
+}
+
+/* Indicador visual extra (Puntito debajo) para el estado activo */
+.btn-player-control.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; /* Ajusta según altura */
+    width: 4px;
+    height: 4px;
+    background-color: currentColor;
+    border-radius: 50%;
+}
+
+/* Botón Play/Pause Principal (Más grande) */
+.btn-player-control.main-play {
+    width: 32px;
+    height: 32px;
+    background-color: #fff;
+    border-radius: 50%;
+    color: #000; /* Icono negro */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.btn-player-control.main-play:hover {
+    transform: scale(1.1);
+    color: #000; /* Se mantiene negro */
+}
+
+.btn-player-control.main-play svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    margin-left: 2px; /* Ajuste óptico para el icono de Play */
+}
+
+/* Ajuste específico para el icono de pausa que no necesita margen */
+.btn-player-control.main-play.is-playing svg {
+    margin-left: 0;
 }

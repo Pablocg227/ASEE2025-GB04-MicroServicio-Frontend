@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 // API PRINCIPAL
 import { jsPDF } from "jspdf";
 import {
@@ -66,8 +67,11 @@ const InteractiveRating = ({ currentRating, onRate }) => {
 };
 
 // ------------------ COMPONENTE PRINCIPAL ------------------
-// Aceptamos onPlay
-const PublicAlbumDetail = ({ albumId, onBack, onOpenSong, onPlay }) => {
+// Aceptamos onPlay para la reproducción global
+const PublicAlbumDetail = ({ onPlay }) => {
+  const { albumId } = useParams();
+  const navigate = useNavigate();
+
   const [album, setAlbum] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -217,7 +221,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong, onPlay }) => {
 
     // Llamada al reproductor global
     if (onPlay) {
-      onPlay(song);
+      onPlay(song, tracks);
     }
   };
 
@@ -350,7 +354,11 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong, onPlay }) => {
 
   return (
     <section className="album-page">
-      <button type="button" className="btn-back" onClick={onBack}>
+      <button
+        type="button"
+        className="btn-back"
+        onClick={() => navigate("/musica")}
+      >
         ← Volver al catálogo
       </button>
 
@@ -447,7 +455,7 @@ const PublicAlbumDetail = ({ albumId, onBack, onOpenSong, onPlay }) => {
                     className={`track-item ${index === currentTrackIndex ? "active" : ""}`}
                     onClick={() => {
                       setCurrentTrackIndex(index);
-                      if (onOpenSong) onOpenSong(song.id);
+                      navigate(`/musica/cancion/${song.id}`);
                     }}
                   >
                     <div

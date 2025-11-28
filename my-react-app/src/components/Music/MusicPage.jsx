@@ -1,30 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   fetchArtistAlbums,
   fetchArtistSongs,
   getArtistEmailFromToken,
-  registerSongPlay,
-  getStoredUserEmail,
 } from "../../services/musicApi";
-
-// Importamos la estadística histórica para centralizarla aquí
-import { postSongReproduction } from "../../services/api";
 
 import AlbumList from "./AlbumList";
 import SongList from "./SongList";
 import PublicCatalog from "./PublicCatalog";
-import PublicSongDetail from "./PublicSongDetail";
 import PublicAlbumCatalog from "./PublicAlbumCatalog";
-import PublicAlbumDetail from "./PublicAlbumDetail";
 import PlaylistsPage from "./PlaylistsPage";
-import PlaylistDetailPage from "./PlaylistDetailPage";
 import ArtistStatsPanel from "./ArtistStatsPanel";
-import BottomPlayer from "./BottomPlayer";
 
 import "../../styles/MusicGlobal.css";
 
-function MusicPage() {
+// Aceptamos onPlay por si algún componente interno lo necesita en el futuro
+function MusicPage({ onPlay }) {
   const [albums, setAlbums] = useState([]);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,18 +28,7 @@ function MusicPage() {
   const [activeTab, setActiveTab] = useState("albums");
   const [viewMode, setViewMode] = useState("catalog");
 
-  const [selectedSongId, setSelectedSongId] = useState(null);
-  const [selectedAlbumId, setSelectedAlbumId] = useState(null);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
-
-  // Estado para el reproductor global
-  const [currentSong, setCurrentSong] = useState(null);
-
-  // Estado para forzar re-renderizado del reproductor
-  const [playTrigger, setPlayTrigger] = useState(0);
-
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -74,51 +55,8 @@ function MusicPage() {
       setIsListenerLoggedIn(false);
     }
 
-    const params = new URLSearchParams(location.search);
-    const paramSongId = params.get("songId");
-    const paramAlbumId = params.get("albumId");
-
-    if (paramSongId) {
-      setSelectedSongId(paramSongId);
-      setViewMode("song");
-    } else if (paramAlbumId) {
-      setSelectedAlbumId(paramAlbumId);
-      setViewMode("album");
-    } else {
-      setViewMode("catalog");
-    }
-
     setLoading(false);
-  }, [location.search]);
-
-  // --------------------------------------------------------
-  // LÓGICA DE REPRODUCCIÓN GLOBAL (Audio + Estadísticas)
-  // --------------------------------------------------------
-  const handleGlobalPlay = async (song) => {
-    if (!song || !song.id) return;
-
-    // 1. Activar audio y mostrar en BottomPlayer
-    setCurrentSong(song);
-
-    setPlayTrigger((prev) => prev + 1);
-
-    // 2. Registrar estadística histórica (quien reprodujo qué)
-    const email = getStoredUserEmail();
-    if (email) {
-      postSongReproduction(song.id, email).catch((err) =>
-        console.warn("No se pudo guardar estadística histórica", err),
-      );
-    }
-
-    // 3. Registrar incremento de visualización (contador total)
-    try {
-      await registerSongPlay(song.id);
-      console.log(`Reproducción registrada para ID: ${song.id}`);
-    } catch (error) {
-      console.error("Error al registrar reproducción:", error);
-    }
-  };
-  // --------------------------------------------------------
+  }, []);
 
   const loadData = async (email) => {
     try {
@@ -151,8 +89,6 @@ function MusicPage() {
     setSongs([]);
     setActiveTab("albums");
     setViewMode("catalog");
-    setSelectedSongId(null);
-    setSelectedAlbumId(null);
     setCurrentUserEmail(null);
   };
 
@@ -160,53 +96,27 @@ function MusicPage() {
     window.location.href = "/login.html";
   };
 
+  // Navegación a las rutas de detalle
   const handleSelectSong = (songId) => {
-    setSelectedSongId(songId);
-    setViewMode("song");
-  };
-
-  const handleBackToSongCatalog = () => {
-    if (location.search) {
-      navigate("/musica", { replace: true });
-    }
-    setSelectedSongId(null);
-    setViewMode("catalog");
+    navigate(`/musica/cancion/${songId}`);
   };
 
   const handleSelectAlbum = (albumId) => {
-    setSelectedAlbumId(albumId);
-    setViewMode("album");
-  };
-
-  const handleBackToAlbumCatalog = () => {
-    if (location.search) {
-      navigate("/musica", { replace: true });
-    }
-    setSelectedAlbumId(null);
-    setViewMode("albums");
-  };
-
-  const handleOpenSongFromAlbum = (songId) => {
-    setSelectedSongId(songId);
-    setViewMode("song");
+    navigate(`/musica/album/${albumId}`);
   };
 
   if (loading) {
     return <div className="loading">Cargando...</div>;
   }
 
-  const isSongView = viewMode === "catalog" || viewMode === "song";
-  const isAlbumView = viewMode === "albums" || viewMode === "album";
-  const isPlaylistsView = viewMode === "playlists" || viewMode === "playlist";
+  const isSongView = viewMode === "catalog";
+  const isAlbumView = viewMode === "albums";
+  const isPlaylistsView = viewMode === "playlists";
   const isArtistPanelView = viewMode === "artist_panel";
   const isStatsView = viewMode === "stats";
 
   return (
-    // IMPORTANTE: Asegúrate de que este div cierra correctamente al final
-    <div
-      className="music-page-wrapper"
-      style={{ paddingBottom: currentSong ? "90px" : "0" }}
-    >
+    <div className="music-page-wrapper">
       <header className="app-header">
         <h1>Resound Música</h1>
 
@@ -215,22 +125,14 @@ function MusicPage() {
             <button
               type="button"
               className={`btn-mode ${isSongView ? "active" : ""}`}
-              onClick={() => {
-                setViewMode("catalog");
-                setSelectedSongId(null);
-                if (location.search) navigate("/musica");
-              }}
+              onClick={() => setViewMode("catalog")}
             >
               Explorar canciones
             </button>
             <button
               type="button"
               className={`btn-mode ${isAlbumView ? "active" : ""}`}
-              onClick={() => {
-                setViewMode("albums");
-                setSelectedAlbumId(null);
-                if (location.search) navigate("/musica");
-              }}
+              onClick={() => setViewMode("albums")}
             >
               Explorar álbumes
             </button>
@@ -239,11 +141,7 @@ function MusicPage() {
               <button
                 type="button"
                 className={`btn-mode ${isPlaylistsView ? "active" : ""}`}
-                onClick={() => {
-                  setViewMode("playlists");
-                  setSelectedPlaylistId(null);
-                  if (location.search) navigate("/musica");
-                }}
+                onClick={() => setViewMode("playlists")}
               >
                 Mis playlists
               </button>
@@ -364,52 +262,22 @@ function MusicPage() {
       </header>
 
       {/* RENDERIZADO DE VISTAS */}
+
       {viewMode === "catalog" && (
         <PublicCatalog onSelectSong={handleSelectSong} />
-      )}
-
-      {viewMode === "song" && selectedSongId != null && (
-        <PublicSongDetail
-          songId={selectedSongId}
-          onBack={handleBackToSongCatalog}
-          onPlay={handleGlobalPlay} // <--- Pasamos la función global
-        />
       )}
 
       {viewMode === "albums" && (
         <PublicAlbumCatalog onSelectAlbum={handleSelectAlbum} />
       )}
 
-      {viewMode === "album" && selectedAlbumId != null && (
-        <PublicAlbumDetail
-          albumId={selectedAlbumId}
-          onBack={handleBackToAlbumCatalog}
-          onOpenSong={handleOpenSongFromAlbum}
-          onPlay={handleGlobalPlay} // <--- Pasamos la función global
-        />
-      )}
-
       {viewMode === "playlists" && (
         <PlaylistsPage
-          onOpenPlaylist={(id) => {
-            setSelectedPlaylistId(id);
-            setViewMode("playlist");
-          }}
+          onOpenPlaylist={(id) => navigate(`/musica/playlist/${id}`)}
         />
       )}
 
-      {viewMode === "playlist" && selectedPlaylistId != null && (
-        <PlaylistDetailPage
-          playlistId={selectedPlaylistId}
-          onBack={() => {
-            setViewMode("playlists");
-            setSelectedPlaylistId(null);
-          }}
-          onOpenSong={handleSelectSong}
-          onPlay={handleGlobalPlay} // <--- Pasamos la función global
-        />
-      )}
-
+      {/* PANELES DE ARTISTA */}
       {artistEmail && viewMode === "artist_panel" && (
         <>
           <div className="tabs" style={{ marginTop: "20px" }}>
@@ -446,9 +314,6 @@ function MusicPage() {
       {artistEmail && viewMode === "stats" && (
         <ArtistStatsPanel artistEmail={artistEmail} />
       )}
-
-      {/* Reproductor Global */}
-      {currentSong && <BottomPlayer song={currentSong} trigger={playTrigger} />}
     </div>
   );
 }
