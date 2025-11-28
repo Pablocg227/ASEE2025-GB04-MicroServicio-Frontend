@@ -1,0 +1,315 @@
+/* src/styles/Playlists.css */
+
+/* ---------- Layout genérico de página de playlists ---------- */
+
+.page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+/* ---------- Lista de playlists (grid) ---------- */
+
+.playlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+/* Card de playlist en el grid */
+.playlist-card {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0f2fe 50%, #fff 100%);
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.playlist-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.playlist-card-main {
+    text-align: left;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+}
+
+.playlist-card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+}
+
+.playlist-desc {
+    color: #555;
+    margin: 0 0 4px;
+}
+
+.playlist-meta {
+    font-size: 0.9rem;
+    color: #777;
+    margin: 0;
+}
+
+/* ---------- Lista genérica de canciones (por si se usa fuera del detalle) ---------- */
+
+.playlist-songs {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+.playlist-song-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.playlist-song-row:last-child {
+    border-bottom: none;
+}
+
+.playlist-song-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.playlist-song-artist {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* ---------- Utilidades generales ---------- */
+
+.link-back {
+    margin-bottom: 12px;
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    padding: 0;
+}
+
+.btn-link-danger {
+    background: none;
+    border: none;
+    color: #c0392b;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.9rem;
+}
+
+/* Formulario dentro de modal (crear/editar playlist) */
+.playlist-form .form-field textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* ---------- Modal “Añadir a playlist” ---------- */
+
+.playlist-chooser {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.playlist-chooser-item {
+    display: flex;
+}
+
+.playlist-chooser-meta {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-left: 4px;
+}
+
+.upload-success {
+    color: #2e7d32;
+    margin-top: 4px;
+}
+
+/* ---------- Detalle de playlist ---------- */
+
+.playlist-detail-page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+}
+
+.playlist-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 32px;
+    align-items: flex-start;
+}
+
+/* Portada grande al estilo álbum/canción */
+.playlist-detail-cover img {
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    object-fit: cover;
+}
+
+/* Caja principal de info + canciones */
+.playlist-detail-main {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 24px 24px 28px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Cabecera de la playlist */
+.playlist-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.playlist-detail-header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 4px;
+}
+
+.playlist-edit-btn {
+    border-radius: 999px;
+    padding-inline: 18px;
+}
+
+/* Sección de canciones dentro del detalle */
+.playlist-songs-section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+}
+
+/* Sobrescribimos la lista de canciones solo dentro del detalle
+para ajustar márgenes/bordes sin romper otras vistas. */
+.playlist-detail-main .playlist-songs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.playlist-detail-main .playlist-song-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+.playlist-detail-main .playlist-song-row:first-child {
+    border-top: none;
+}
+
+.playlist-song-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.playlist-song-title {
+    font-weight: 600;
+}
+
+.playlist-song-price {
+    font-weight: 500;
+}
+
+/* Bloque izquierdo de la fila: botón de play + info */
+.playlist-song-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Botón de reproducir en cada canción */
+.playlist-song-play {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #4f46e5;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.playlist-song-play:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.3);
+}
+
+.playlist-song-play:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
+}
+
+/* Responsive: una columna en móviles */
+@media (max-width: 768px) {
+    .playlist-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .playlist-detail-cover img {
+        max-width: 380px;
+        margin: 0 auto;
+        display: block;
+    }
+}
+
+/* Botón "Ver canción" en cada fila de la playlist */
+.playlist-song-open {
+    border: none;
+    background: none;
+    padding: 0;
+    margin-left: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #4f46e5;
+    text-decoration: underline;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+/* Aparece sólo cuando pasas el ratón por la fila */
+.playlist-song-row:hover .playlist-song-open {
+    opacity: 1;
+}
+
+/* Opcional: marcar fila al pasar el ratón */
+.playlist-song-row:hover {
+    background-color: #f5f3ff;
+}
+
