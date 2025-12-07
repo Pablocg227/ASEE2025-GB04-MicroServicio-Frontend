@@ -18,13 +18,6 @@
                         <div class="card-body p-4">
                             <h4 class="mb-3 text-center">Subir Nueva Canción</h4>
 
-                            <!-- <form -->
-                            <!--     id="uploadSongForm" -->
-                            <!--     action="/api/canciones" -->
-                            <!--     method="post" -->
-                            <!--     enctype="multipart/form-data" -->
-                            <!--     novalidate -->
-                            <!-- > -->
                             <form id="uploadSongForm" enctype="multipart/form-data" novalidate>
 
                                 <div class="row g-2">
@@ -85,35 +78,18 @@
                                         </div>
                                     </div>
 
-                                    <!-- <div class="col-12"> -->
-                                    <!--     <label for="emailArtista" class="form-label" -->
-                                    <!--     >Email(s) del artista</label -->
-                                    <!--     > -->
-                                    <!--     <input -->
-                                    <!--         id="emailArtista" -->
-                                    <!--         name="emailArtista" -->
-                                    <!--         type="text" -->
-                                    <!--         class="form-control" -->
-                                    <!--         required -->
-                                    <!--     /> -->
-                                    <!--     <div class="form-text"> -->
-                                    <!--         Introduce uno o más emails, separados por comas. -->
-                                    <!--     </div> -->
-                                    <!--     <div class="invalid-feedback"> -->
-                                    <!--         Introduce al menos un email de artista. -->
-                                    <!--     </div> -->
-                                    <!-- </div> -->
-
                                     <div class="col-12">
-                                        <label class="form-label">Género(s)</label>
+                                        <fieldset>
+                                            <legend class="form-label">Género(s)</legend>
 
-                                        <!-- contenedor de “cuadraditos” -->
-                                        <div id="genreGrid" class="d-flex flex-wrap gap-2"></div>
+                                            <!-- contenedor de "cuadraditos" -->
+                                            <div id="genreGrid" class="d-flex flex-wrap gap-2"></div>
 
-                                        <small class="form-text text-muted">Selecciona uno o varios.</small>
-                                        <div id="genreInvalid" class="invalid-feedback d-block" style="display:none;">
-                                            Selecciona al menos un género.
-                                        </div>
+                                            <small class="form-text text-muted">Selecciona uno o varios.</small>
+                                            <div id="genreInvalid" class="invalid-feedback d-block" style="display:none;">
+                                                Selecciona al menos un género.
+                                            </div>
+                                        </fieldset>
                                     </div>
 
                                     <div class="col-md-6">
